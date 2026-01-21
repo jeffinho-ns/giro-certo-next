@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏍️ Giro Certo Admin Dashboard
 
-## Getting Started
+Painel administrativo para gerenciamento do ecossistema Giro Certo.
 
-First, run the development server:
+## 🚀 Tecnologias
 
+- **Next.js 14+** (App Router) com **TypeScript**
+- **Tailwind CSS** - Estilização
+- **Shadcn/UI** - Componentes UI
+- **TanStack Query** - Gerenciamento de estado e cache
+- **Recharts** - Gráficos e visualizações
+- **Leaflet/React-Leaflet** - Mapas interativos
+
+## 📋 Pré-requisitos
+
+- Node.js 18+
+- npm ou yarn
+
+## 🔧 Instalação
+
+1. Instale as dependências:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Configure as variáveis de ambiente:
+```bash
+cp .env.example .env.local
+# Edite o arquivo .env.local com suas configurações
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Inicie o servidor de desenvolvimento:
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Abra [http://localhost:3000](http://localhost:3000) no navegador.
 
-## Learn More
+## 📁 Estrutura do Projeto
 
-To learn more about Next.js, take a look at the following resources:
+```
+giro-certo-next/
+├── app/
+│   ├── (dashboard)/    # Rotas do dashboard (protegidas)
+│   ├── api/            # API Routes
+│   ├── globals.css     # Estilos globais
+│   └── layout.tsx      # Layout principal
+├── components/
+│   └── ui/             # Componentes Shadcn/UI
+├── lib/
+│   └── utils.ts        # Utilitários
+└── public/             # Arquivos estáticos
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🔑 Funcionalidades Principais
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- ✅ **Dashboard (Torre de Controle)** - Mapa em tempo real com motociclistas e pedidos
+- ✅ **Gestão de Delivery** - Monitoramento de pedidos (pending, accepted, inProgress, completed)
+- ✅ **Financeiro** - Relatórios de comissões e sistema de repasse
+- ✅ **Módulo de Assinantes** - Listagem Premium e estatísticas
+- ✅ **Gamificação** - Configuração de bonificações e campanhas
+- ✅ **Moderação Social** - Gestão de posts da comunidade
 
-## Deploy on Vercel
+## 🎨 Tema
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Suporte a tema Dark/Light
+- Design moderno e responsivo
+- Componentes acessíveis (Shadcn/UI)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📝 Scripts Disponíveis
+
+- `npm run dev` - Inicia o servidor de desenvolvimento
+- `npm run build` - Cria build de produção
+- `npm run start` - Inicia o servidor de produção
+- `npm run lint` - Executa o linter
+
+## 🔒 Variáveis de Ambiente
+
+```env
+NEXT_PUBLIC_API_URL="http://localhost:3001"
+NEXT_PUBLIC_WS_URL="ws://localhost:3001"
+```
+
+## 📚 Componentes UI
+
+Adicione componentes do Shadcn/UI conforme necessário:
+
+```bash
+npx shadcn@latest add [component-name]
+```
+
+## 🗺️ Mapas
+
+O projeto utiliza Leaflet para mapas interativos. Configure sua chave do Mapbox (opcional) para melhor visualização:
+
+```env
+NEXT_PUBLIC_MAPBOX_TOKEN="your-mapbox-token"
+```
+
+## 📊 Gráficos
+
+Utiliza Recharts para visualizações de dados:
+- Performance da frota
+- Volume de entregas
+- Estatísticas financeiras
+- Métricas de assinantes
