@@ -26,7 +26,9 @@ export default function ControlTowerPage() {
       if (filters.vehicleType) params.append('vehicleType', filters.vehicleType);
       if (filters.hasVerifiedBadge !== undefined) params.append('hasVerifiedBadge', String(filters.hasVerifiedBadge));
       
-      const response = await apiClient.get<DashboardStats>(`/api/dashboard/stats?${params.toString()}`);
+      const queryString = params.toString();
+      const url = `/api/dashboard/stats${queryString ? `?${queryString}` : ''}`;
+      const response = await apiClient.get<DashboardStats>(url);
       return response;
     },
   });
@@ -38,7 +40,9 @@ export default function ControlTowerPage() {
       if (filters.vehicleType) params.append('vehicleType', filters.vehicleType);
       if (filters.hasVerifiedBadge !== undefined) params.append('hasVerifiedBadge', String(filters.hasVerifiedBadge));
       
-      const response = await apiClient.get<{ riders: ActiveRider[] }>(`/api/dashboard/active-riders?${params.toString()}`);
+      const queryString = params.toString();
+      const url = `/api/dashboard/active-riders${queryString ? `?${queryString}` : ''}`;
+      const response = await apiClient.get<{ riders: ActiveRider[] }>(url);
       return response;
     },
     refetchInterval: 10000, // Atualizar a cada 10 segundos
@@ -51,7 +55,9 @@ export default function ControlTowerPage() {
       if (filters.orderStatus) params.append('status', filters.orderStatus);
       if (filters.vehicleType) params.append('vehicleType', filters.vehicleType);
       
-      const response = await apiClient.get<{ orders: any[] }>(`/api/dashboard/orders?${params.toString()}`);
+      const queryString = params.toString();
+      const url = `/api/dashboard/orders${queryString ? `?${queryString}` : ''}`;
+      const response = await apiClient.get<{ orders: any[] }>(url);
       return response;
     },
   });
@@ -85,14 +91,14 @@ export default function ControlTowerPage() {
             <div className="space-y-2">
               <Label>Tipo de Veículo</Label>
               <Select
-                value={filters.vehicleType}
-                onValueChange={(value) => setFilters({ ...filters, vehicleType: value })}
+                value={filters.vehicleType || 'all'}
+                onValueChange={(value) => setFilters({ ...filters, vehicleType: value === 'all' ? '' : value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="MOTORCYCLE">Motos</SelectItem>
                   <SelectItem value="BICYCLE">Bicicletas</SelectItem>
                 </SelectContent>
@@ -102,14 +108,14 @@ export default function ControlTowerPage() {
             <div className="space-y-2">
               <Label>Status do Pedido</Label>
               <Select
-                value={filters.orderStatus}
-                onValueChange={(value) => setFilters({ ...filters, orderStatus: value })}
+                value={filters.orderStatus || 'all'}
+                onValueChange={(value) => setFilters({ ...filters, orderStatus: value === 'all' ? '' : value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="pending">Pendentes</SelectItem>
                   <SelectItem value="accepted">Aceitos</SelectItem>
                   <SelectItem value="inProgress">Em Andamento</SelectItem>
@@ -126,7 +132,7 @@ export default function ControlTowerPage() {
                     ? 'verified'
                     : filters.hasVerifiedBadge === false
                     ? 'not-verified'
-                    : ''
+                    : 'all'
                 }
                 onValueChange={(value) =>
                   setFilters({
@@ -140,7 +146,7 @@ export default function ControlTowerPage() {
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="verified">Verificados</SelectItem>
                   <SelectItem value="not-verified">Não Verificados</SelectItem>
                 </SelectContent>
