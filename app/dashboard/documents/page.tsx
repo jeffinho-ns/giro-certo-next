@@ -78,10 +78,20 @@ export default function DocumentsPage() {
       if (filterType !== 'all') params.append('documentType', filterType);
       params.append('limit', '100');
       
-      const response = await apiClient.get<{ documents: CourierDocument[]; total: number }>(
+      const response = await apiClient.get<any>(
         `/api/courier-documents/pending/review?${params.toString()}`
       );
-      return response;
+      
+      // Ajustar estrutura da resposta
+      if (response && response.documents) {
+        return response;
+      } else if (Array.isArray(response)) {
+        return { documents: response, total: response.length };
+      } else if (response && response.data) {
+        return { documents: response.data, total: response.total || response.data.length };
+      }
+      
+      return { documents: [], total: 0 };
     },
   });
 
