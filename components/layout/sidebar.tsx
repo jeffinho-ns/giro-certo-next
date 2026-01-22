@@ -15,7 +15,8 @@ import {
   Store,
   AlertTriangle,
   FileText,
-  Bell
+  Bell,
+  ShieldCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -61,10 +62,15 @@ const navigation = [
     description: 'FASE 9: Sistema de notificações',
   },
   {
+    name: 'Documentos',
+    href: '/dashboard/documents',
+    icon: ShieldCheck,
+    description: 'FASE 1: Aprovar documentos de entregadores',
+  },
+  {
     name: 'Usuários',
     href: '/dashboard/users',
     icon: UserCog,
-    description: 'FASE 1: Gestão de documentos',
   },
   {
     name: 'Financeiro',
