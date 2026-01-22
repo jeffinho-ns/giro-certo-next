@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://giro-certo-api.onrender.com';
 
 export interface ApiResponse<T = any> {
   status: string;
@@ -8,9 +8,29 @@ export interface ApiResponse<T = any> {
 
 class ApiClient {
   private baseURL: string;
+  private token: string | null = null;
 
   constructor(baseURL: string = API_URL) {
     this.baseURL = baseURL;
+    // Carregar token do localStorage se estiver no cliente
+    if (typeof window !== 'undefined') {
+      this.token = localStorage.getItem('auth_token');
+    }
+  }
+
+  setToken(token: string | null) {
+    this.token = token;
+    if (typeof window !== 'undefined') {
+      if (token) {
+        localStorage.setItem('auth_token', token);
+      } else {
+        localStorage.removeItem('auth_token');
+      }
+    }
+  }
+
+  getToken(): string | null {
+    return this.token;
   }
 
   private async request<T>(
@@ -19,18 +39,29 @@ class ApiClient {
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
     
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+
+    // Adicionar token de autenticação se disponível
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+    
     const config: RequestInit = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
       ...options,
+      headers,
     };
 
     try {
       const response = await fetch(url, config);
       
       if (!response.ok) {
+        // Se for erro 401, limpar token
+        if (response.status === 401) {
+          this.setToken(null);
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -69,6 +100,28 @@ class ApiClient {
   // Health check
   async health(): Promise<ApiResponse> {
     return this.get<ApiResponse>('/health');
+  }
+
+  // Auth methods
+  async login(email: string, password: string) {
+    const response = await this.post<{ user: any; token: string }>('/api/auth/login', {
+      email,
+      password,
+    });
+    if (response.token) {
+      this.setToken(response.token);
+    }
+    return response;
+  }
+
+  async logout() {
+    try {
+      await this.post('/api/auth/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      this.setToken(null);
+    }
   }
 }
 

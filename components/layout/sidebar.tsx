@@ -10,7 +10,8 @@ import {
   Trophy, 
   Users,
   MapPin,
-  Home
+  Home,
+  UserCog
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -49,6 +50,11 @@ const navigation = [
     name: 'Moderação',
     href: '/dashboard/moderation',
     icon: Users,
+  },
+  {
+    name: 'Usuários',
+    href: '/dashboard/users',
+    icon: UserCog,
   },
 ];
 

@@ -20,6 +20,12 @@ export enum SubscriptionType {
   premium = 'premium',
 }
 
+export enum UserRole {
+  USER = 'USER',
+  MODERATOR = 'MODERATOR',
+  ADMIN = 'ADMIN',
+}
+
 export interface User {
   id: string;
   name: string;
@@ -27,6 +33,7 @@ export interface User {
   age: number;
   photoUrl?: string;
   pilotProfile: string;
+  role: UserRole;
   isSubscriber: boolean;
   subscriptionType: SubscriptionType;
   loyaltyPoints: number;
