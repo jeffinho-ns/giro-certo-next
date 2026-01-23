@@ -85,7 +85,7 @@ export default function DeliveryPage() {
       params.set('limit', '100');
       if (statusFilter !== 'all') params.set('status', statusFilter);
       const res = await apiClient.get<{ orders: DeliveryOrder[]; total: number }>(
-        `/api/delivery/orders?${params.toString()}`
+        `/api/delivery?${params.toString()}`
       );
       return res;
     },
