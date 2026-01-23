@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useState } from 'react';
+import { apiClient } from '@/lib/api';
 
 function getStatusBadge(status: DeliveryStatus) {
   const variants: Record<DeliveryStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {
@@ -60,7 +61,7 @@ function DeliveryOrderDetail({ order }: { order: DeliveryOrder }) {
         </div>
         <div>
           <p className="text-sm text-muted-foreground">Comissão</p>
-          <p className="font-medium">R$ {order.appCommission.toFixed(2)}</p>
+          <p className="font-medium">R$ {(order.appCommission ?? 0).toFixed(2)}</p>
         </div>
       </div>
       {order.riderName && (
@@ -77,73 +78,20 @@ export default function DeliveryPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data: orders, isLoading } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['delivery-orders', statusFilter],
     queryFn: async () => {
-      // Mock data até a API estar pronta
-      return [
-        {
-          id: '1',
-          storeId: '1',
-          storeName: 'Restaurante Bella',
-          storeAddress: 'Rua A, 123',
-          storeLatitude: -23.5505,
-          storeLongitude: -46.6333,
-          deliveryAddress: 'Rua B, 456',
-          deliveryLatitude: -23.5515,
-          deliveryLongitude: -46.6343,
-          recipientName: 'João Silva',
-          recipientPhone: '(11) 99999-9999',
-          value: 45.50,
-          deliveryFee: 8.00,
-          appCommission: 3.00,
-          status: 'inProgress' as DeliveryStatus,
-          priority: 'normal' as any,
-          riderId: '1',
-          riderName: 'Maria Santos',
-          createdAt: new Date().toISOString(),
-          acceptedAt: new Date().toISOString(),
-        },
-        {
-          id: '2',
-          storeId: '2',
-          storeName: 'Loja Tech',
-          storeAddress: 'Rua C, 789',
-          storeLatitude: -23.5525,
-          storeLongitude: -46.6353,
-          deliveryAddress: 'Rua D, 321',
-          deliveryLatitude: -23.5535,
-          deliveryLongitude: -46.6363,
-          value: 120.00,
-          deliveryFee: 10.00,
-          appCommission: 1.00,
-          status: 'pending' as DeliveryStatus,
-          priority: 'high' as any,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: '3',
-          storeId: '1',
-          storeName: 'Restaurante Bella',
-          storeAddress: 'Rua A, 123',
-          storeLatitude: -23.5505,
-          storeLongitude: -46.6333,
-          deliveryAddress: 'Rua E, 654',
-          deliveryLatitude: -23.5545,
-          deliveryLongitude: -46.6373,
-          value: 35.00,
-          deliveryFee: 7.00,
-          appCommission: 3.00,
-          status: 'completed' as DeliveryStatus,
-          priority: 'normal' as any,
-          riderId: '2',
-          riderName: 'Pedro Costa',
-          createdAt: new Date().toISOString(),
-          completedAt: new Date().toISOString(),
-        },
-      ] as DeliveryOrder[];
+      const params = new URLSearchParams();
+      params.set('limit', '100');
+      if (statusFilter !== 'all') params.set('status', statusFilter);
+      const res = await apiClient.get<{ orders: DeliveryOrder[]; total: number }>(
+        `/api/delivery/orders?${params.toString()}`
+      );
+      return res;
     },
   });
+
+  const orders = data?.orders ?? [];
 
   const filteredOrders = orders?.filter((order) => {
     if (statusFilter !== 'all' && order.status !== statusFilter) return false;
@@ -200,7 +148,7 @@ export default function DeliveryPage() {
         <CardHeader>
           <CardTitle>Pedidos</CardTitle>
           <CardDescription>
-            {filteredOrders?.length || 0} pedido(s) encontrado(s)
+            {error ? 'Erro ao carregar pedidos.' : `${filteredOrders?.length ?? 0} pedido(s) encontrado(s)`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -222,6 +170,12 @@ export default function DeliveryPage() {
                 <TableRow>
                   <TableCell colSpan={8} className="text-center">Carregando...</TableCell>
                 </TableRow>
+              ) : error ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center text-destructive">
+                    Erro ao carregar. <Button variant="link" onClick={() => refetch()}>Tentar novamente</Button>
+                  </TableCell>
+                </TableRow>
               ) : filteredOrders?.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center">Nenhum pedido encontrado</TableCell>
@@ -234,8 +188,8 @@ export default function DeliveryPage() {
                     <TableCell className="max-w-[200px] truncate">{order.deliveryAddress}</TableCell>
                     <TableCell>R$ {order.value.toFixed(2)}</TableCell>
                     <TableCell>
-                      <span className={order.appCommission === 3 ? 'text-green-600 font-semibold' : ''}>
-                        R$ {order.appCommission.toFixed(2)}
+                      <span className={(order.appCommission ?? 0) === 3 ? 'text-green-600 font-semibold' : ''}>
+                        R$ {(order.appCommission ?? 0).toFixed(2)}
                       </span>
                     </TableCell>
                     <TableCell>{getStatusBadge(order.status)}</TableCell>
