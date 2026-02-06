@@ -65,6 +65,12 @@ const navigation = [
     name: 'Documentos',
     href: '/dashboard/documents',
     icon: ShieldCheck,
+    description: 'FASE 1: Documento Casual',
+  },
+    {
+    name: 'Aprovação',
+    href: '/dashboard/delivery-registrations',
+    icon: ShieldCheck,
     description: 'FASE 1: Aprovar documentos de entregadores',
   },
   {
