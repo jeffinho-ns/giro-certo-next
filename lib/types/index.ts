@@ -273,3 +273,41 @@ export interface Alert {
   readAt: string | null;
   createdAt: string;
 }
+
+// Delivery Registration
+export enum DeliveryRegistrationStatus {
+  PENDING = 'PENDING',
+  UNDER_REVIEW = 'UNDER_REVIEW',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
+export interface DeliveryRegistration {
+  id: string;
+  userId: string;
+  status: DeliveryRegistrationStatus;
+  cpfCnh: string;
+  selfieWithDocData?: string; // base64
+  motoWithPlateData?: string; // base64
+  platePlateCloseupData?: string; // base64
+  cnhPhotoData?: string; // base64
+  crlvPhotoData?: string; // base64
+  plateLicense: string;
+  currentKilometers: number;
+  lastOilChangeDate?: string;
+  lastOilChangeKm?: number;
+  emergencyPhone?: string;
+  consentImages: boolean;
+  approvedAt?: string;
+  approvedBy?: string;
+  rejectionReason?: string;
+  adminNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
