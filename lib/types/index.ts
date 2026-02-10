@@ -26,6 +26,14 @@ export enum UserRole {
   ADMIN = 'ADMIN',
 }
 
+export enum UserType {
+  CASUAL = 'CASUAL',
+  DIARIO = 'DIARIO',
+  RACING = 'RACING',
+  DELIVERY = 'DELIVERY',
+  LOJISTA = 'LOJISTA',
+}
+
 export interface User {
   id: string;
   name: string;
@@ -33,6 +41,7 @@ export interface User {
   age: number;
   photoUrl?: string;
   pilotProfile: string;
+  userType?: UserType | null;
   role: UserRole;
   isSubscriber: boolean;
   subscriptionType: SubscriptionType;
