@@ -476,7 +476,11 @@ export default function UsersPage() {
 
                               {resolveUserAccess(user) === UserRole.USER ? (
                                 <Select
-                                  value={isRiderType(resolvedUserType || '') ? resolvedUserType : RIDER_TYPE_PLACEHOLDER}
+                                  value={
+                                    resolvedUserType && isRiderType(resolvedUserType)
+                                      ? resolvedUserType
+                                      : RIDER_TYPE_PLACEHOLDER
+                                  }
                                   onValueChange={(value) => {
                                     if (isRiderType(value)) {
                                       updateUserType(user.id, value);
