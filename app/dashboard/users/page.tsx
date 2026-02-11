@@ -16,20 +16,48 @@ import {
 } from '@/components/ui/select';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 
-const USER_TYPE_OPTIONS = [
+const LOJISTA_ACCESS = 'LOJISTA';
+const RIDER_TYPE_PLACEHOLDER = 'SEM_TIPO';
+
+type UserAccessType = UserRole | typeof LOJISTA_ACCESS;
+
+const USER_ACCESS_OPTIONS: Array<{ value: UserAccessType; label: string }> = [
+  { value: LOJISTA_ACCESS, label: 'Lojista' },
+  { value: UserRole.MODERATOR, label: 'Moderador' },
+  { value: UserRole.ADMIN, label: 'Administrador' },
+  { value: UserRole.USER, label: 'Usuário' },
+];
+
+const RIDER_TYPE_OPTIONS = [
   { value: UserType.CASUAL, label: 'Casual' },
   { value: UserType.DIARIO, label: 'Diário' },
   { value: UserType.RACING, label: 'Racing' },
   { value: UserType.DELIVERY, label: 'Delivery' },
+] as const;
+
+const USER_TYPE_OPTIONS = [
+  ...RIDER_TYPE_OPTIONS,
   { value: UserType.LOJISTA, label: 'Lojista' },
 ] as const;
+
+const USER_TYPE_LABELS: Record<UserType, string> = {
+  [UserType.CASUAL]: 'Casual',
+  [UserType.DIARIO]: 'Diário',
+  [UserType.RACING]: 'Racing',
+  [UserType.DELIVERY]: 'Delivery',
+  [UserType.LOJISTA]: 'Lojista',
+};
 
 const isUserRole = (value: string): value is UserRole => {
   return Object.values(UserRole).includes(value as UserRole);
 };
 
 const isUserType = (value: string): value is UserType => {
-  return USER_TYPE_OPTIONS.some((option) => option.value === value);
+  return Object.values(UserType).includes(value as UserType);
+};
+
+const isRiderType = (value: string): value is UserType => {
+  return RIDER_TYPE_OPTIONS.some((option) => option.value === value);
 };
 
 const resolveUserType = (user: User): UserType | null => {
@@ -49,6 +77,18 @@ const resolveUserType = (user: User): UserType | null => {
     default:
       return null;
   }
+};
+
+const resolveUserAccess = (user: User): UserAccessType => {
+  if (user.role === UserRole.ADMIN) {
+    return UserRole.ADMIN;
+  }
+
+  if (user.role === UserRole.MODERATOR) {
+    return UserRole.MODERATOR;
+  }
+
+  return resolveUserType(user) === UserType.LOJISTA ? LOJISTA_ACCESS : UserRole.USER;
 };
 
 const getLegacyPilotProfileFromUserType = (userType: UserType): string | null => {
@@ -71,7 +111,7 @@ const getUserTypeLabel = (userType: UserType | null) => {
     return 'Não definido';
   }
 
-  return USER_TYPE_OPTIONS.find((option) => option.value === userType)?.label || userType;
+  return USER_TYPE_LABELS[userType] || userType;
 };
 
 export default function UsersPage() {
@@ -152,6 +192,31 @@ export default function UsersPage() {
       alert('Erro ao atualizar tipo de usuário. Verifique se o endpoint já está disponível na API.');
     } finally {
       setUpdatingTypeUserId(null);
+    }
+  };
+
+  const updateUserAccess = async (user: User, newAccess: UserAccessType) => {
+    const currentAccess = resolveUserAccess(user);
+    if (currentAccess === newAccess) {
+      return;
+    }
+
+    if (newAccess === UserRole.ADMIN || newAccess === UserRole.MODERATOR) {
+      await updateUserRole(user.id, newAccess);
+      return;
+    }
+
+    if (newAccess === LOJISTA_ACCESS) {
+      await updateUserRole(user.id, UserRole.USER);
+      await updateUserType(user.id, UserType.LOJISTA);
+      return;
+    }
+
+    await updateUserRole(user.id, UserRole.USER);
+
+    // Se estava marcado como lojista, converte para um tipo padrão de motociclista.
+    if (resolveUserType(user) === UserType.LOJISTA) {
+      await updateUserType(user.id, UserType.DIARIO);
     }
   };
 
@@ -384,29 +449,15 @@ export default function UsersPage() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
                             <div className="flex items-center gap-2">
                               <Select
-                                value={user.role}
+                                value={resolveUserAccess(user)}
                                 onValueChange={(value) => {
-                                  if (isUserRole(value)) {
-                                    updateUserRole(user.id, value);
+                                  if (value === LOJISTA_ACCESS) {
+                                    updateUserAccess(user, LOJISTA_ACCESS);
+                                    return;
                                   }
-                                }}
-                                disabled={!isAdmin || isRowLoading}
-                              >
-                                <SelectTrigger className="w-[150px]">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value={UserRole.USER}>Usuário</SelectItem>
-                                  <SelectItem value={UserRole.MODERATOR}>Moderador</SelectItem>
-                                  <SelectItem value={UserRole.ADMIN}>Administrador</SelectItem>
-                                </SelectContent>
-                              </Select>
 
-                              <Select
-                                value={resolvedUserType || 'NAO_DEFINIDO'}
-                                onValueChange={(value) => {
-                                  if (isUserType(value)) {
-                                    updateUserType(user.id, value);
+                                  if (isUserRole(value)) {
+                                    updateUserAccess(user, value);
                                   }
                                 }}
                                 disabled={!isAdmin || isRowLoading}
@@ -415,14 +466,37 @@ export default function UsersPage() {
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="NAO_DEFINIDO">Não definido</SelectItem>
-                                  {USER_TYPE_OPTIONS.map((option) => (
+                                  {USER_ACCESS_OPTIONS.map((option) => (
                                     <SelectItem key={option.value} value={option.value}>
                                       {option.label}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
+
+                              {resolveUserAccess(user) === UserRole.USER ? (
+                                <Select
+                                  value={isRiderType(resolvedUserType || '') ? resolvedUserType : RIDER_TYPE_PLACEHOLDER}
+                                  onValueChange={(value) => {
+                                    if (isRiderType(value)) {
+                                      updateUserType(user.id, value);
+                                    }
+                                  }}
+                                  disabled={!isAdmin || isRowLoading}
+                                >
+                                  <SelectTrigger className="w-[190px]">
+                                    <SelectValue placeholder="Tipo motociclista" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value={RIDER_TYPE_PLACEHOLDER}>Selecionar tipo</SelectItem>
+                                    {RIDER_TYPE_OPTIONS.map((option) => (
+                                      <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              ) : null}
 
                               <Button
                                 type="button"
