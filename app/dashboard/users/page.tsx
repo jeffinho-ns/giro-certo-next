@@ -1,12 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Trash2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Trash2, User as UserIcon } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/auth-context';
 import { User, UserRole, UserType } from '@/lib/types';
 import { apiClient } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -124,10 +130,24 @@ export default function UsersPage() {
   const [updatingRoleUserId, setUpdatingRoleUserId] = useState<string | null>(null);
   const [updatingTypeUserId, setUpdatingTypeUserId] = useState<string | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [sentFollowRequestTargetIds, setSentFollowRequestTargetIds] = useState<Set<string>>(new Set());
+  const [sendingFollowRequestUserId, setSendingFollowRequestUserId] = useState<string | null>(null);
+  const [profileModalUser, setProfileModalUser] = useState<User | null>(null);
+
+  const loadSentFollowRequestIds = useCallback(async () => {
+    try {
+      const data = await apiClient.get<{ targetIds?: string[] }>('/api/users/me/follow-requests/sent');
+      const ids = data?.targetIds ?? [];
+      setSentFollowRequestTargetIds(new Set(ids));
+    } catch {
+      // endpoint pode não existir ainda
+    }
+  }, []);
 
   useEffect(() => {
     loadUsers();
-  }, []);
+    loadSentFollowRequestIds();
+  }, [loadSentFollowRequestIds]);
 
   const loadUsers = async () => {
     try {
@@ -217,6 +237,20 @@ export default function UsersPage() {
     // Se estava marcado como lojista, converte para um tipo padrão de motociclista.
     if (resolveUserType(user) === UserType.LOJISTA) {
       await updateUserType(user.id, UserType.DIARIO);
+    }
+  };
+
+  const sendFollowRequest = async (userId: string) => {
+    if (currentUser?.id === userId) return;
+    try {
+      setSendingFollowRequestUserId(userId);
+      await apiClient.post(`/api/users/${userId}/follow-request`);
+      await loadSentFollowRequestIds();
+    } catch (err) {
+      console.error('Erro ao enviar solicitação de seguimento:', err);
+      alert('Erro ao enviar solicitação. Tente novamente.');
+    } finally {
+      setSendingFollowRequestUserId(null);
     }
   };
 
@@ -447,7 +481,36 @@ export default function UsersPage() {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {currentUser?.id !== user.id && (
+                                <>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setProfileModalUser(user)}
+                                  >
+                                    <UserIcon className="h-4 w-4 mr-1" />
+                                    Ver perfil
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => sendFollowRequest(user.id)}
+                                    disabled={
+                                      sentFollowRequestTargetIds.has(user.id) ||
+                                      sendingFollowRequestUserId === user.id
+                                    }
+                                  >
+                                    {sentFollowRequestTargetIds.has(user.id)
+                                      ? 'Solicitação enviada'
+                                      : sendingFollowRequestUserId === user.id
+                                        ? 'Enviando...'
+                                        : 'Solicitar seguir'}
+                                  </Button>
+                                </>
+                              )}
                               <Select
                                 value={resolveUserAccess(user)}
                                 onValueChange={(value) => {
@@ -527,6 +590,71 @@ export default function UsersPage() {
         <div className="text-sm text-muted-foreground">
           Total: {filteredUsers.length} usuário(s)
         </div>
+
+        {/* Modal Ver perfil */}
+        <Dialog open={!!profileModalUser} onOpenChange={(open) => !open && setProfileModalUser(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Perfil do usuário</DialogTitle>
+            </DialogHeader>
+            {profileModalUser && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex-shrink-0 h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    {profileModalUser.photoUrl ? (
+                      <img
+                        src={profileModalUser.photoUrl}
+                        alt={profileModalUser.name}
+                        className="h-16 w-16 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-2xl font-medium text-primary">
+                        {profileModalUser.name.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">{profileModalUser.name}</p>
+                    <p className="text-sm text-muted-foreground">{profileModalUser.email}</p>
+                    <span
+                      className={`inline-block mt-1 px-2 py-0.5 text-xs font-semibold rounded-full ${getUserTypeBadgeColor(
+                        resolveUserType(profileModalUser)
+                      )}`}
+                    >
+                      {getUserTypeLabel(resolveUserType(profileModalUser))}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="flex-1"
+                    onClick={() => sendFollowRequest(profileModalUser.id)}
+                    disabled={
+                      currentUser?.id === profileModalUser.id ||
+                      sentFollowRequestTargetIds.has(profileModalUser.id) ||
+                      sendingFollowRequestUserId === profileModalUser.id
+                    }
+                  >
+                    {sentFollowRequestTargetIds.has(profileModalUser.id)
+                      ? 'Solicitação enviada'
+                      : sendingFollowRequestUserId === profileModalUser.id
+                        ? 'Enviando...'
+                        : 'Solicitar seguir'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setProfileModalUser(null)}
+                  >
+                    Fechar
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </ProtectedRoute>
   );
