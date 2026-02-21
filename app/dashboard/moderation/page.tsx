@@ -6,73 +6,66 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Users, Search, Eye, Trash2, Shield, AlertTriangle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useState } from 'react';
-import Image from 'next/image';
+import apiClient from '@/lib/api';
+
+interface PostFromApi {
+  id: string;
+  userId: string;
+  content: string;
+  images: string[];
+  likesCount: number;
+  commentsCount: number;
+  createdAt: string;
+  user?: { id: string; name: string; photoUrl?: string };
+  reportInfo?: Array<{ reason: string; createdAt: string }>;
+}
 
 export default function ModerationPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [showReportedOnly, setShowReportedOnly] = useState(false);
   const [selectedPost, setSelectedPost] = useState<any>(null);
+  const queryClient = useQueryClient();
 
-  const { data: posts, isLoading } = useQuery({
-    queryKey: ['community-posts'],
+  const { data: apiData, isLoading } = useQuery({
+    queryKey: ['community-posts', showReportedOnly],
     queryFn: async () => {
-      // Mock data
-      return [
-        {
-          id: '1',
-          userId: '1',
-          userName: 'João Silva',
-          userBike: 'Honda CB 600F',
-          content: 'Ótima experiência hoje na estrada! Recomendo a rota pela serra.',
-          images: [],
-          likesCount: 23,
-          commentsCount: 5,
-          createdAt: '2024-01-21T10:30:00Z',
-          reported: false,
-        },
-        {
-          id: '2',
-          userId: '2',
-          userName: 'Maria Santos',
-          userBike: 'Yamaha MT-07',
-          content: 'Preciso de ajuda com manutenção do filtro de ar. Alguém tem dicas?',
-          images: ['/placeholder-image.jpg'],
-          likesCount: 15,
-          commentsCount: 8,
-          createdAt: '2024-01-21T09:15:00Z',
-          reported: true,
-          reportReason: 'Conteúdo inapropriado',
-        },
-        {
-          id: '3',
-          userId: '3',
-          userName: 'Pedro Costa',
-          userBike: 'Kawasaki Ninja 650',
-          content: 'Fotos da minha customização nova! O que acharam?',
-          images: ['/placeholder-image.jpg', '/placeholder-image2.jpg'],
-          likesCount: 45,
-          commentsCount: 12,
-          createdAt: '2024-01-20T16:45:00Z',
-          reported: false,
-        },
-        {
-          id: '4',
-          userId: '4',
-          userName: 'Ana Oliveira',
-          userBike: 'BMW G 310 R',
-          content: 'Primeira viagem longa hoje! 500km completados com sucesso! 🏍️',
-          images: [],
-          likesCount: 67,
-          commentsCount: 20,
-          createdAt: '2024-01-20T14:20:00Z',
-          reported: false,
-        },
-      ];
+      const params = new URLSearchParams({ limit: '100' });
+      if (showReportedOnly) params.set('reported', 'true');
+      const res = await apiClient.get<{ posts: PostFromApi[] }>(`/api/posts?${params}`);
+      return res;
     },
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: (postId: string) => apiClient.delete(`/api/posts/${postId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['community-posts'] });
+    },
+  });
+
+  const posts = apiData?.posts?.map((p) => {
+    const reports = (p.reportInfo as Array<{ reason: string; createdAt: string }>) ?? [];
+    const reported = reports.length > 0;
+    const reportReason = reports.map((r) => r.reason).join('; ') || undefined;
+    return {
+      id: p.id,
+      userId: p.userId,
+      userName: p.user?.name ?? 'Utilizador',
+      userPhotoUrl: p.user?.photoUrl,
+      userBike: '-',
+      content: p.content,
+      images: p.images ?? [],
+      likesCount: p.likesCount ?? 0,
+      commentsCount: p.commentsCount ?? 0,
+      createdAt: p.createdAt,
+      reported,
+      reportReason,
+    };
+  }) ?? [];
 
   const filteredPosts = posts?.filter(
     (post) =>
@@ -142,12 +135,12 @@ export default function ModerationPage() {
         </Card>
       </div>
 
-      {/* Search */}
+      {/* Search & Filter */}
       <Card>
         <CardHeader>
-          <CardTitle>Buscar Posts</CardTitle>
+          <CardTitle>Buscar e Filtrar Posts</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -156,6 +149,16 @@ export default function ModerationPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={showReportedOnly ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setShowReportedOnly(!showReportedOnly)}
+            >
+              <AlertTriangle className="h-4 w-4 mr-2" />
+              Apenas reportados
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -197,6 +200,7 @@ export default function ModerationPage() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Avatar>
+                          <AvatarImage src={post.userPhotoUrl} alt={post.userName} />
                           <AvatarFallback>{post.userName.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <span className="font-medium">{post.userName}</span>
@@ -242,6 +246,7 @@ export default function ModerationPage() {
                               <div className="space-y-4">
                                 <div className="flex items-center gap-3">
                                   <Avatar>
+                                    <AvatarImage src={selectedPost.userPhotoUrl} alt={selectedPost.userName} />
                                     <AvatarFallback>{selectedPost.userName.charAt(0)}</AvatarFallback>
                                   </Avatar>
                                   <div>
@@ -253,7 +258,14 @@ export default function ModerationPage() {
                                 {selectedPost.images?.length > 0 && (
                                   <div className="grid grid-cols-2 gap-2">
                                     {selectedPost.images.map((img: string, idx: number) => (
-                                      <div key={idx} className="relative h-32 w-full rounded-lg border bg-muted" />
+                                      <div key={idx} className="relative h-32 w-full rounded-lg border bg-muted overflow-hidden">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                          src={img.startsWith('http') ? img : '/placeholder-image.jpg'}
+                                          alt={`Imagem ${idx + 1}`}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      </div>
                                     ))}
                                   </div>
                                 )}
@@ -264,8 +276,18 @@ export default function ModerationPage() {
                                   </div>
                                 )}
                                 <div className="flex gap-2">
-                                  <Button variant="outline" className="flex-1">Aprovar</Button>
-                                  <Button variant="destructive" className="flex-1">
+                                  <Button variant="outline" className="flex-1" disabled>Aprovar</Button>
+                                  <Button
+                                    variant="destructive"
+                                    className="flex-1"
+                                    disabled={deleteMutation.isPending}
+                                    onClick={() => {
+                                      if (selectedPost?.id) {
+                                        deleteMutation.mutate(selectedPost.id);
+                                        setSelectedPost(null);
+                                      }
+                                    }}
+                                  >
                                     <Trash2 className="h-4 w-4 mr-2" />
                                     Remover
                                   </Button>
@@ -274,7 +296,16 @@ export default function ModerationPage() {
                             )}
                           </DialogContent>
                         </Dialog>
-                        <Button variant="ghost" size="sm">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={deleteMutation.isPending}
+                          onClick={() => {
+                            if (confirm('Remover este post?')) {
+                              deleteMutation.mutate(post.id);
+                            }
+                          }}
+                        >
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
                       </div>
