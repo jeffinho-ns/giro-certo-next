@@ -118,6 +118,8 @@ export default function ControlTowerPage() {
                   <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="pending">Pendentes</SelectItem>
                   <SelectItem value="accepted">Aceitos</SelectItem>
+                  <SelectItem value="arrivedAtStore">Chegaram na Loja</SelectItem>
+                  <SelectItem value="inTransit">Em Trânsito</SelectItem>
                   <SelectItem value="inProgress">Em Andamento</SelectItem>
                   <SelectItem value="completed">Concluídos</SelectItem>
                 </SelectContent>

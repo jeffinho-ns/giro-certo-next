@@ -17,6 +17,8 @@ function getStatusBadge(status: DeliveryStatus) {
   const variants: Record<DeliveryStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {
     pending: 'secondary',
     accepted: 'default',
+    arrivedAtStore: 'default',
+    inTransit: 'default',
     inProgress: 'default',
     completed: 'outline',
     cancelled: 'destructive',
@@ -25,6 +27,8 @@ function getStatusBadge(status: DeliveryStatus) {
   const labels: Record<DeliveryStatus, string> = {
     pending: 'Pendente',
     accepted: 'Aceito',
+    arrivedAtStore: 'Chegou na Loja',
+    inTransit: 'Em Trânsito',
     inProgress: 'Em Andamento',
     completed: 'Concluído',
     cancelled: 'Cancelado',
@@ -134,6 +138,8 @@ export default function DeliveryPage() {
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="pending">Pendente</SelectItem>
                 <SelectItem value="accepted">Aceito</SelectItem>
+                <SelectItem value="arrivedAtStore">Chegou na Loja</SelectItem>
+                <SelectItem value="inTransit">Em Trânsito</SelectItem>
                 <SelectItem value="inProgress">Em Andamento</SelectItem>
                 <SelectItem value="completed">Concluído</SelectItem>
                 <SelectItem value="cancelled">Cancelado</SelectItem>

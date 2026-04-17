@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Badge } from "@/components/ui/badge";
 import { ShieldCheck } from "lucide-react";
-import { ActiveRider, VehicleType } from "@/lib/types";
+import { ActiveRider, DeliveryStatus, VehicleType } from "@/lib/types";
 import L from "leaflet";
 
 // Importar estilos do Leaflet
@@ -85,8 +85,14 @@ const storeIcon =
 const createVehicleIcon = (
   vehicleType: VehicleType | null,
   isVerified: boolean,
+  currentOrderStatus?: DeliveryStatus | null,
 ) => {
-  const iconColor = vehicleType === VehicleType.BICYCLE ? "#10b981" : "#3b82f6";
+  const isArrivedAtStore = currentOrderStatus === DeliveryStatus.arrivedAtStore;
+  const iconColor = isArrivedAtStore
+    ? "#f97316"
+    : vehicleType === VehicleType.BICYCLE
+      ? "#10b981"
+      : "#3b82f6";
 
   // CORREÇÃO BUILD: Tipagem explícita como tupla [number, number]
   const iconSize: [number, number] = isVerified ? [32, 32] : [28, 28];
@@ -94,6 +100,17 @@ const createVehicleIcon = (
   return L.divIcon({
     className: "custom-vehicle-icon",
     html: `
+      ${
+        isArrivedAtStore
+          ? `<style>
+              @keyframes pulseDeliveryArrived {
+                0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(249,115,22,0.7); }
+                70% { transform: scale(1.06); box-shadow: 0 0 0 12px rgba(249,115,22,0); }
+                100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(249,115,22,0); }
+              }
+            </style>`
+          : ""
+      }
       <div style="
         background-color: ${iconColor};
         width: ${iconSize[0]}px;
@@ -107,8 +124,15 @@ const createVehicleIcon = (
         color: white;
         font-size: ${iconSize[0] * 0.6}px;
         position: relative;
+        ${isArrivedAtStore ? "animation: pulseDeliveryArrived 1.5s infinite;" : ""}
       ">
-        ${vehicleType === VehicleType.BICYCLE ? "🚲" : "🏍️"}
+        ${
+          isArrivedAtStore
+            ? "🛵"
+            : vehicleType === VehicleType.BICYCLE
+              ? "🚲"
+              : "🏍️"
+        }
         ${
           isVerified
             ? `
@@ -204,6 +228,7 @@ export function ControlTowerMap({
           const icon = createVehicleIcon(
             vehicleType,
             rider.hasVerifiedBadge || false,
+            rider.currentOrderStatus,
           );
 
           return (
@@ -240,6 +265,9 @@ export function ControlTowerMap({
                         : "N/A"}
                     </p>
                     <p>Pedidos ativos: {rider.activeOrders || 0}</p>
+                    {rider.currentOrderStatus && (
+                      <p>Status atual: {rider.currentOrderStatus}</p>
+                    )}
                   </div>
                 </div>
               </Popup>
@@ -254,6 +282,8 @@ export function ControlTowerMap({
           const statusColors: Record<string, string> = {
             pending: "#f59e0b",
             accepted: "#3b82f6",
+            arrivedAtStore: "#f97316",
+            inTransit: "#10b981",
             inProgress: "#10b981",
             completed: "#6b7280",
             cancelled: "#ef4444",

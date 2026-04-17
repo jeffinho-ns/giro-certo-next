@@ -3,6 +3,8 @@
 export enum DeliveryStatus {
   pending = 'pending',
   accepted = 'accepted',
+  arrivedAtStore = 'arrivedAtStore',
+  inTransit = 'inTransit',
   inProgress = 'inProgress',
   completed = 'completed',
   cancelled = 'cancelled',
@@ -255,6 +257,7 @@ export interface ActiveRider {
   } | null;
   averageRating: number;
   activeOrders: number;
+  currentOrderStatus?: DeliveryStatus | null;
 }
 
 export enum AlertType {
