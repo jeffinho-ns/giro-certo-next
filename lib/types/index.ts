@@ -238,6 +238,19 @@ export enum VehicleType {
   BICYCLE = 'BICYCLE',
 }
 
+/** Pedido ativo do rider (Torre de Controle / dashboard). */
+export interface ActiveDeliverySummary {
+  id: string;
+  status: string;
+  storeName: string;
+  storeAddress: string;
+  deliveryAddress: string;
+  storeLatitude: number;
+  storeLongitude: number;
+  deliveryLatitude: number;
+  deliveryLongitude: number;
+}
+
 export interface ActiveRider {
   id: string;
   name: string;
@@ -257,7 +270,9 @@ export interface ActiveRider {
   } | null;
   averageRating: number;
   activeOrders: number;
-  currentOrderStatus?: DeliveryStatus | null;
+  currentOrderStatus?: DeliveryStatus | string | null;
+  /** Detalhes do pedido em rota (quando houver). */
+  currentOrder?: ActiveDeliverySummary | null;
 }
 
 export enum AlertType {
