@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/lib/contexts/auth-context';
 import { apiClient } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,13 +22,14 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, XCircle, Clock, User, Bike, FileText, Eye } from 'lucide-react';
-import Image from 'next/image';
+import { Eye } from 'lucide-react';
 
 interface DeliveryRegistration {
   id: string;
   userId: string;
   status: 'PENDING' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED';
+  /** MOTORCYCLE (padrão) ou BICYCLE */
+  vehicleType?: 'MOTORCYCLE' | 'BICYCLE';
   cpfCnh: string;
   selfieWithDocData?: string; // base64
   motoWithPlateData?: string; // base64
@@ -41,6 +41,8 @@ interface DeliveryRegistration {
   lastOilChangeDate?: string;
   lastOilChangeKm?: number;
   emergencyPhone?: string;
+  equipments?: string[];
+  bikeOptionalReceiptData?: string;
   consentImages: boolean;
   approvedAt?: string;
   approvedBy?: string;
@@ -74,7 +76,12 @@ function RegistrationDetail({ registration }: { registration: DeliveryRegistrati
     <div className="space-y-6">
       {/* Dados do usuário */}
       <div>
-        <h3 className="font-semibold mb-2">Dados do Motociclista</h3>
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
+          <h3 className="font-semibold">Dados do entregador</h3>
+          {registration.vehicleType === 'BICYCLE' && (
+            <Badge variant="secondary" className="text-xs">Bicicleta</Badge>
+          )}
+        </div>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <p className="text-muted-foreground">Nome</p>
@@ -106,10 +113,14 @@ function RegistrationDetail({ registration }: { registration: DeliveryRegistrati
 
       {/* Moto */}
       <div>
-        <h3 className="font-semibold mb-2">Dados da Motocicleta</h3>
+        <h3 className="font-semibold mb-2">
+          {registration.vehicleType === 'BICYCLE' ? 'Dados da bike' : 'Dados da moto'}
+        </h3>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <p className="text-muted-foreground">Placa</p>
+            <p className="text-muted-foreground">
+              {registration.vehicleType === 'BICYCLE' ? 'Nº de série' : 'Placa'}
+            </p>
             <p className="font-mono font-bold text-lg">{registration.plateLicense}</p>
           </div>
           <div>
@@ -117,7 +128,11 @@ function RegistrationDetail({ registration }: { registration: DeliveryRegistrati
             <p className="font-medium">{registration.currentKilometers.toLocaleString('pt-BR')} km</p>
           </div>
           <div>
-            <p className="text-muted-foreground">Data Última Troca de Óleo</p>
+            <p className="text-muted-foreground">
+              {registration.vehicleType === 'BICYCLE'
+                ? 'Data Última Manutenção'
+                : 'Data Última Troca de Óleo'}
+            </p>
             <p className="font-medium">
               {registration.lastOilChangeDate 
                 ? new Date(registration.lastOilChangeDate).toLocaleDateString('pt-BR')
@@ -138,6 +153,26 @@ function RegistrationDetail({ registration }: { registration: DeliveryRegistrati
         <div>
           <h3 className="font-semibold mb-2">Contato de Emergência</h3>
           <p className="font-medium">{registration.emergencyPhone}</p>
+        </div>
+      )}
+
+      {registration.equipments && registration.equipments.length > 0 && (
+        <div>
+          <h3 className="font-semibold mb-2">Equipamentos declarados</h3>
+          <div className="flex flex-wrap gap-1.5">
+            {registration.equipments.map((e) => (
+              <Badge key={e} variant="outline" className="text-xs">
+                {e}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {registration.bikeOptionalReceiptData && (
+        <div>
+          <h3 className="font-semibold mb-2">Comprovante (opcional)</h3>
+          <ImagePreview data={registration.bikeOptionalReceiptData} label="Nota ou canhoto" />
         </div>
       )}
 
@@ -179,8 +214,12 @@ function RegistrationDetail({ registration }: { registration: DeliveryRegistrati
   );
 }
 
+type ReviewListApiResponse = {
+  registrations: DeliveryRegistration[];
+  total: number;
+};
+
 export default function DeliveryRegistrationPage() {
-  const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [filterStatus, setFilterStatus] = useState<string>('PENDING');
   const [selectedRegistration, setSelectedRegistration] = useState<DeliveryRegistration | null>(null);
@@ -200,13 +239,16 @@ export default function DeliveryRegistrationPage() {
       if (filterStatus !== 'all') params.append('status', filterStatus);
       params.append('limit', '50');
 
-      const response = await apiClient.get<any>(
+      const response = await apiClient.get<
+        ReviewListApiResponse | DeliveryRegistration[]
+      >(
         `/api/delivery-registration/pending/review-list?${params.toString()}`
       );
 
-      if (response && response.registrations) {
+      if (response && !Array.isArray(response) && response.registrations) {
         return response;
-      } else if (Array.isArray(response)) {
+      }
+      if (Array.isArray(response)) {
         return { registrations: response, total: response.length };
       }
 
@@ -345,6 +387,9 @@ export default function DeliveryRegistrationPage() {
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2 items-center text-sm">
+                      {registration.vehicleType === 'BICYCLE' && (
+                        <Badge variant="outline" className="text-xs">Bike</Badge>
+                      )}
                       <span className="font-mono">{registration.plateLicense}</span>
                       <span className="text-muted-foreground">•</span>
                       <span>{registration.currentKilometers.toLocaleString('pt-BR')} km</span>

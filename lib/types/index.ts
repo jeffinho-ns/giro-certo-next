@@ -313,6 +313,7 @@ export interface DeliveryRegistration {
   id: string;
   userId: string;
   status: DeliveryRegistrationStatus;
+  vehicleType?: 'MOTORCYCLE' | 'BICYCLE';
   cpfCnh: string;
   selfieWithDocData?: string; // base64
   motoWithPlateData?: string; // base64
@@ -324,6 +325,10 @@ export interface DeliveryRegistration {
   lastOilChangeDate?: string;
   lastOilChangeKm?: number;
   emergencyPhone?: string;
+  /** Itens de equipamento declarados no cadastro (ex.: luz, capacete) */
+  equipments?: string[];
+  /** Comprovante opcional (nota / canhoto) em base64 */
+  bikeOptionalReceiptData?: string;
   consentImages: boolean;
   approvedAt?: string;
   approvedBy?: string;
