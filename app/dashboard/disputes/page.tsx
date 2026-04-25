@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/contexts/auth-context';
 import { Dispute, DisputeStatus, DisputeType } from '@/lib/types';
 import { apiClient } from '@/lib/api';
@@ -35,6 +35,7 @@ const ControlTowerMap = dynamic(
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, CheckCircle2, Clock, Package, DollarSign, User, Store, MapPin } from 'lucide-react';
+import { io, type Socket } from 'socket.io-client';
 
 export default function DisputesPage() {
   const { isAdmin } = useAuth();
@@ -43,6 +44,45 @@ export default function DisputesPage() {
   const [filterType, setFilterType] = useState<string>('all');
   const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
   const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
+  const [liveRaceEvents, setLiveRaceEvents] = useState<
+    Array<{
+      orderId: string;
+      loserRiderName?: string;
+      winnerRiderName?: string;
+      at: string;
+    }>
+  >([]);
+
+  useEffect(() => {
+    const base = process.env.NEXT_PUBLIC_API_URL || 'https://giro-certo-api.onrender.com';
+    const uri = new URL(base.includes('://') ? base : `https://${base}`);
+    const socketUrl = `${uri.protocol}//${uri.host}`;
+    const socket: Socket = io(socketUrl, {
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 8,
+      reconnectionDelay: 2000,
+    });
+
+    const onRace = (event: any) => {
+      setLiveRaceEvents((prev) => [
+        {
+          orderId: String(event?.orderId ?? ''),
+          loserRiderName: event?.loserRiderName ? String(event.loserRiderName) : undefined,
+          winnerRiderName: event?.winnerRiderName ? String(event.winnerRiderName) : undefined,
+          at: event?.at ? String(event.at) : new Date().toISOString(),
+        },
+        ...prev,
+      ].slice(0, 12));
+      void queryClient.invalidateQueries({ queryKey: ['disputes'] });
+      void queryClient.invalidateQueries({ queryKey: ['disputes-stats'] });
+    };
+
+    socket.on('dispute:race', onRace);
+    return () => {
+      socket.off('dispute:race', onRace);
+      socket.disconnect();
+    };
+  }, [queryClient]);
 
   // Listar disputas
   const { data: disputesData, isLoading } = useQuery<{ disputes: Dispute[]; total: number }>({
@@ -257,6 +297,38 @@ export default function DisputesPage() {
             </Card>
           </div>
         ) : null}
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Monitor de concorrência (tempo real)</CardTitle>
+            <CardDescription>
+              Tentativas simultâneas de aceite de corrida e resultado do desempate.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {liveRaceEvents.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Sem eventos recentes de concorrência.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {liveRaceEvents.map((e, idx) => (
+                  <div
+                    key={`${e.orderId}-${e.at}-${idx}`}
+                    className="rounded-md border p-2 text-sm"
+                  >
+                    <span className="font-medium">Pedido #{e.orderId.slice(0, 8)}</span>
+                    {' • '}
+                    {e.loserRiderName || 'Entregador'} perdeu para{' '}
+                    <span className="font-medium">{e.winnerRiderName || 'outro entregador'}</span>
+                    {' • '}
+                    {new Date(e.at).toLocaleTimeString('pt-BR')}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Filtros */}
         <Card>
