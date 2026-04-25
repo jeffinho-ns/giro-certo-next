@@ -53,6 +53,17 @@ export interface User {
   isOnline: boolean;
   createdAt: string;
   updatedAt: string;
+  /** Admin: documentação verificada (entregador) */
+  hasVerifiedDocuments?: boolean;
+  /** Admin: bloqueio de corridas (inadimplência, etc.) */
+  deliveryRiderBlocked?: boolean;
+  /** Override de bloqueio por manutenção crítica */
+  maintenanceBlockOverride?: boolean;
+  partnerId?: string | null;
+  coverUrl?: string | null;
+  verificationBadge?: boolean;
+  followersCount?: number;
+  followingCount?: number;
 }
 
 export interface Bike {

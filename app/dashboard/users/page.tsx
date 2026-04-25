@@ -8,12 +8,6 @@ import { apiClient } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -21,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ProtectedRoute } from '@/components/auth/protected-route';
+import { UserFullProfileDialog } from './user-full-profile-dialog';
 
 const LOJISTA_ACCESS = 'LOJISTA';
 const RIDER_TYPE_PLACEHOLDER = 'SEM_TIPO';
@@ -443,7 +438,14 @@ export default function UsersPage() {
                                 </span>
                               </div>
                               <div className="ml-4">
-                                <div className="text-sm font-medium text-foreground">{user.name}</div>
+                                <div className="text-sm font-medium text-foreground flex items-center gap-2 flex-wrap">
+                                  {user.name}
+                                  {user.deliveryRiderBlocked && (
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive/15 text-destructive font-semibold">
+                                      Corridas bloq.
+                                    </span>
+                                  )}
+                                </div>
                                 <div className="text-sm text-muted-foreground">ID: {user.id.slice(0, 8)}...</div>
                               </div>
                             </div>
@@ -591,70 +593,27 @@ export default function UsersPage() {
           Total: {filteredUsers.length} usuário(s)
         </div>
 
-        {/* Modal Ver perfil */}
-        <Dialog open={!!profileModalUser} onOpenChange={(open) => !open && setProfileModalUser(null)}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Perfil do usuário</DialogTitle>
-            </DialogHeader>
-            {profileModalUser && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="flex-shrink-0 h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    {profileModalUser.photoUrl ? (
-                      <img
-                        src={profileModalUser.photoUrl}
-                        alt={profileModalUser.name}
-                        className="h-16 w-16 rounded-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-2xl font-medium text-primary">
-                        {profileModalUser.name.charAt(0).toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-medium text-foreground">{profileModalUser.name}</p>
-                    <p className="text-sm text-muted-foreground">{profileModalUser.email}</p>
-                    <span
-                      className={`inline-block mt-1 px-2 py-0.5 text-xs font-semibold rounded-full ${getUserTypeBadgeColor(
-                        resolveUserType(profileModalUser)
-                      )}`}
-                    >
-                      {getUserTypeLabel(resolveUserType(profileModalUser))}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="flex-1"
-                    onClick={() => sendFollowRequest(profileModalUser.id)}
-                    disabled={
-                      currentUser?.id === profileModalUser.id ||
-                      sentFollowRequestTargetIds.has(profileModalUser.id) ||
-                      sendingFollowRequestUserId === profileModalUser.id
-                    }
-                  >
-                    {sentFollowRequestTargetIds.has(profileModalUser.id)
-                      ? 'Solicitação enviada'
-                      : sendingFollowRequestUserId === profileModalUser.id
-                        ? 'Enviando...'
-                        : 'Solicitar seguir'}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setProfileModalUser(null)}
-                  >
-                    Fechar
-                  </Button>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+        <UserFullProfileDialog
+          user={profileModalUser}
+          open={!!profileModalUser}
+          onOpenChange={(open) => {
+            if (!open) {
+              setProfileModalUser(null);
+            }
+          }}
+          isAdmin={isAdmin}
+          onRiderBlockToggled={loadUsers}
+          getUserTypeLabel={getUserTypeLabel}
+          resolveUserType={resolveUserType}
+          currentUserId={currentUser?.id}
+          followRequestLoading={
+            profileModalUser != null && sendingFollowRequestUserId === profileModalUser.id
+          }
+          followRequestSent={
+            profileModalUser != null && sentFollowRequestTargetIds.has(profileModalUser.id)
+          }
+          onFollowRequest={sendFollowRequest}
+        />
       </div>
     </ProtectedRoute>
   );
