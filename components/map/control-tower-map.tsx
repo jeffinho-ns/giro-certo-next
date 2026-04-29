@@ -64,6 +64,9 @@ export interface ControlTowerMapProps {
   onSelectRider?: (id: string | null) => void;
   /** [lat, lng][] — pré-visualização da perna atual (API maps/directions). */
   routePreviewLatLngs?: [number, number][];
+  /** [lat, lng][] — trajeto histórico concluído. */
+  historicalRouteLatLngs?: [number, number][];
+  onSelectOrder?: (orderId: string | null) => void;
 }
 
 const storeIcon =
@@ -206,6 +209,8 @@ export function ControlTowerMap({
   selectedRiderId = null,
   onSelectRider = () => {},
   routePreviewLatLngs = [],
+  historicalRouteLatLngs = [],
+  onSelectOrder = () => {},
 }: ControlTowerMapProps) {
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -261,6 +266,12 @@ export function ControlTowerMap({
           <Polyline
             positions={routePreviewLatLngs}
             pathOptions={{ color: "#2563eb", weight: 5, opacity: 0.88 }}
+          />
+        )}
+        {historicalRouteLatLngs.length >= 2 && (
+          <Polyline
+            positions={historicalRouteLatLngs}
+            pathOptions={{ color: "#f97316", weight: 5, opacity: 0.9, dashArray: "8 8" }}
           />
         )}
 
@@ -360,6 +371,9 @@ export function ControlTowerMap({
               key={`${order.id}-store`}
               position={[order.storeLatitude, order.storeLongitude]}
               icon={storeIcon || undefined}
+              eventHandlers={{
+                click: () => onSelectOrder(order.id),
+              }}
             >
               <Popup>
                 <div className="space-y-2 min-w-[180px]">

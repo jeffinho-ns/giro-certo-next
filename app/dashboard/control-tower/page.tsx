@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { useControlTowerRealtime } from '@/hooks/use-control-tower-realtime';
+import { useAuth } from '@/lib/contexts/auth-context';
 import {
   describeRiderOperationalLeg,
   formatDeliveryStatusPt,
@@ -39,19 +40,19 @@ function buildOrdersQueryParams(filters: {
 }
 
 export default function ControlTowerPage() {
+  const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [liveRiderPositions, setLiveRiderPositions] = useState<
     Record<string, { lat: number; lng: number }>
   >({});
   const [selectedRiderId, setSelectedRiderId] = useState<string | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
   const [filters, setFilters] = useState({
     vehicleType: '' as string,
     hasVerifiedBadge: undefined as boolean | undefined,
     orderStatus: 'active' as string,
   });
-
-  useControlTowerRealtime(queryClient, setLiveRiderPositions);
 
   const { data: stats } = useQuery<DashboardStats>({
     queryKey: ['dashboard-stats', filters.vehicleType, filters.hasVerifiedBadge],
@@ -94,6 +95,13 @@ export default function ControlTowerPage() {
     },
     refetchInterval: 10_000,
   });
+
+  const trackedOrderIds = useMemo(() => {
+    if (!isAdmin) return [];
+    return (orders?.orders ?? []).map((o) => o.id).filter(Boolean);
+  }, [isAdmin, orders?.orders]);
+
+  useControlTowerRealtime(queryClient, setLiveRiderPositions, trackedOrderIds);
 
   const mergedRiders: ActiveRider[] = useMemo(() => {
     const list = activeRiders?.riders ?? [];
@@ -161,6 +169,32 @@ export default function ControlTowerPage() {
     setSelectedRiderId(id);
   }, []);
 
+  const onSelectOrder = useCallback((id: string | null) => {
+    setSelectedOrderId(id);
+  }, []);
+
+  const selectedOrder = useMemo(
+    () => (orders?.orders ?? []).find((o) => o.id === selectedOrderId) ?? null,
+    [orders?.orders, selectedOrderId]
+  );
+
+  const { data: routeHistoryData } = useQuery({
+    queryKey: ['control-tower-route-history', selectedOrderId],
+    enabled: Boolean(selectedOrderId && selectedOrder?.status === 'completed'),
+    queryFn: async () => {
+      const orderId = selectedOrderId!;
+      return apiClient.get<{ points?: { lat: number; lng: number }[] }>(
+        `/api/delivery/${orderId}/route-history`
+      );
+    },
+  });
+
+  const historicalRouteLatLngs: [number, number][] = useMemo(() => {
+    const pts = routeHistoryData?.points;
+    if (!pts || pts.length < 2) return [];
+    return pts.map((p) => [p.lat, p.lng] as [number, number]);
+  }, [routeHistoryData]);
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -179,6 +213,7 @@ export default function ControlTowerPage() {
               orderStatus: 'active',
             });
             setSelectedRiderId(null);
+            setSelectedOrderId(null);
           }}
         >
           Limpar Filtros
@@ -361,6 +396,8 @@ export default function ControlTowerPage() {
                 selectedRiderId={selectedRiderId}
                 onSelectRider={onSelectRider}
                 routePreviewLatLngs={routePreviewLatLngs}
+                historicalRouteLatLngs={historicalRouteLatLngs}
+                onSelectOrder={onSelectOrder}
               />
             </div>
 
@@ -438,6 +475,20 @@ export default function ControlTowerPage() {
                     ) : (
                       <p className="text-xs text-muted-foreground border-t border-border pt-3">
                         Este entregador está online sem pedido ativo nestes status.
+                      </p>
+                    )}
+                  </div>
+                )}
+                {selectedOrder?.status === 'completed' && (
+                  <div className="mt-3 border-t border-border pt-3 text-xs">
+                    <p className="font-medium">Histórico da rota concluída</p>
+                    {historicalRouteLatLngs.length >= 2 ? (
+                      <p className="text-orange-600 dark:text-orange-400">
+                        Trajeto real carregado ({historicalRouteLatLngs.length} pontos).
+                      </p>
+                    ) : (
+                      <p className="text-muted-foreground">
+                        Sem pontos suficientes de histórico para este pedido.
                       </p>
                     )}
                   </div>

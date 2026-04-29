@@ -3,6 +3,7 @@
 import { useEffect, type Dispatch, type SetStateAction } from 'react';
 import type { QueryClient } from '@tanstack/react-query';
 import { io, type Socket } from 'socket.io-client';
+import { apiClient } from '@/lib/api';
 
 function socketBaseUrl(): string {
   const base = process.env.NEXT_PUBLIC_API_URL || 'https://giro-certo-api.onrender.com';
@@ -17,16 +18,24 @@ function socketBaseUrl(): string {
  */
 export function useControlTowerRealtime(
   queryClient: QueryClient,
-  setLiveRiderPositions: Dispatch<
-    SetStateAction<Record<string, { lat: number; lng: number }>>
-  >
+  setLiveRiderPositions: Dispatch<SetStateAction<Record<string, { lat: number; lng: number }>>>,
+  orderIds: string[]
 ): void {
   useEffect(() => {
     const url = socketBaseUrl();
+    const token = apiClient.getToken();
     const socket: Socket = io(url, {
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 8,
       reconnectionDelay: 2000,
+      auth: token ? { token } : undefined,
+    });
+
+    socket.on('connect', () => {
+      socket.emit('auth', { token: token ?? undefined });
+      for (const orderId of orderIds) {
+        if (orderId) socket.emit('tracking:join-order', { orderId });
+      }
     });
 
     socket.on('rider:location:update', (data: unknown) => {
@@ -50,7 +59,10 @@ export function useControlTowerRealtime(
     socket.on('delivery:update', bumpLists);
 
     return () => {
+      for (const orderId of orderIds) {
+        if (orderId) socket.emit('tracking:leave-order', { orderId });
+      }
       socket.disconnect();
     };
-  }, [queryClient, setLiveRiderPositions]);
+  }, [orderIds, queryClient, setLiveRiderPositions]);
 }
