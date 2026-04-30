@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useRef, type Dispatch, type SetStateAction } from 'react';
 import type { QueryClient } from '@tanstack/react-query';
 import { io, type Socket } from 'socket.io-client';
 import { apiClient } from '@/lib/api';
@@ -21,6 +21,12 @@ export function useControlTowerRealtime(
   setLiveRiderPositions: Dispatch<SetStateAction<Record<string, { lat: number; lng: number }>>>,
   orderIds: string[]
 ): void {
+  const socketRef = useRef<Socket | null>(null);
+  const joinedRoomsRef = useRef<Set<string>>(new Set());
+  const invalidateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingPositionsRef = useRef<Record<string, { lat: number; lng: number }>>({});
+  const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     const url = socketBaseUrl();
     const token = apiClient.getToken();
@@ -30,10 +36,11 @@ export function useControlTowerRealtime(
       reconnectionDelay: 2000,
       auth: token ? { token } : undefined,
     });
+    socketRef.current = socket;
 
     socket.on('connect', () => {
       socket.emit('auth', { token: token ?? undefined });
-      for (const orderId of orderIds) {
+      for (const orderId of joinedRoomsRef.current) {
         if (orderId) socket.emit('tracking:join-order', { orderId });
       }
     });
@@ -46,23 +53,65 @@ export function useControlTowerRealtime(
       const lat = typeof d.lat === 'number' ? d.lat : parseFloat(String(d.lat ?? ''));
       const lng = typeof d.lng === 'number' ? d.lng : parseFloat(String(d.lng ?? ''));
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-      setLiveRiderPositions((prev) => ({ ...prev, [userId]: { lat, lng } }));
+      pendingPositionsRef.current[userId] = { lat, lng };
+      if (flushTimerRef.current) return;
+      flushTimerRef.current = setTimeout(() => {
+        flushTimerRef.current = null;
+        const batch = pendingPositionsRef.current;
+        pendingPositionsRef.current = {};
+        if (Object.keys(batch).length === 0) return;
+        setLiveRiderPositions((prev) => ({ ...prev, ...batch }));
+      }, 250);
     });
 
     const bumpLists = () => {
-      void queryClient.invalidateQueries({ queryKey: ['active-riders'] });
-      void queryClient.invalidateQueries({ queryKey: ['dashboard-orders'] });
-      void queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      if (invalidateTimerRef.current) return;
+      invalidateTimerRef.current = setTimeout(() => {
+        invalidateTimerRef.current = null;
+        void queryClient.invalidateQueries({ queryKey: ['active-riders'] });
+        void queryClient.invalidateQueries({ queryKey: ['dashboard-orders'] });
+        void queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      }, 450);
     };
 
     socket.on('delivery:status:changed', bumpLists);
     socket.on('delivery:update', bumpLists);
 
     return () => {
-      for (const orderId of orderIds) {
-        if (orderId) socket.emit('tracking:leave-order', { orderId });
+      if (invalidateTimerRef.current) {
+        clearTimeout(invalidateTimerRef.current);
+        invalidateTimerRef.current = null;
       }
+      if (flushTimerRef.current) {
+        clearTimeout(flushTimerRef.current);
+        flushTimerRef.current = null;
+      }
+      pendingPositionsRef.current = {};
       socket.disconnect();
+      socketRef.current = null;
+      joinedRoomsRef.current.clear();
     };
-  }, [orderIds, queryClient, setLiveRiderPositions]);
+  }, [queryClient, setLiveRiderPositions]);
+
+  useEffect(() => {
+    const socket = socketRef.current;
+    const nextRooms = new Set(orderIds.filter(Boolean));
+    const currentRooms = joinedRoomsRef.current;
+    if (!socket) {
+      joinedRoomsRef.current = nextRooms;
+      return;
+    }
+
+    for (const room of currentRooms) {
+      if (!nextRooms.has(room)) {
+        socket.emit('tracking:leave-order', { orderId: room });
+      }
+    }
+    for (const room of nextRooms) {
+      if (!currentRooms.has(room)) {
+        socket.emit('tracking:join-order', { orderId: room });
+      }
+    }
+    joinedRoomsRef.current = nextRooms;
+  }, [orderIds]);
 }

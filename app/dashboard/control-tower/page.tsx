@@ -66,6 +66,8 @@ export default function ControlTowerPage() {
       const url = `/api/dashboard/stats${queryString ? `?${queryString}` : ''}`;
       return apiClient.get<DashboardStats>(url);
     },
+    staleTime: 15_000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: activeRiders } = useQuery<{ riders: ActiveRider[] }>({
@@ -80,7 +82,9 @@ export default function ControlTowerPage() {
       const url = `/api/dashboard/active-riders${queryString ? `?${queryString}` : ''}`;
       return apiClient.get<{ riders: ActiveRider[] }>(url);
     },
-    refetchInterval: 10_000,
+    staleTime: 12_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: orders } = useQuery<{ orders: ControlTowerOrderMarker[] }>({
@@ -93,7 +97,9 @@ export default function ControlTowerPage() {
       const url = `/api/dashboard/orders?${params.toString()}`;
       return apiClient.get<{ orders: ControlTowerOrderMarker[] }>(url);
     },
-    refetchInterval: 10_000,
+    staleTime: 12_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: false,
   });
 
   const trackedOrderIds = useMemo(() => {
