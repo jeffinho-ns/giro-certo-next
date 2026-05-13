@@ -5,6 +5,9 @@ import type { QueryClient } from '@tanstack/react-query';
 import { io, type Socket } from 'socket.io-client';
 import { apiClient } from '@/lib/api';
 
+/** Agrega atualizações de posição antes de repintar o mapa (ms). */
+const RIDER_POSITION_FLUSH_MS = 500;
+
 function socketBaseUrl(): string {
   const base = process.env.NEXT_PUBLIC_API_URL || 'https://giro-certo-api.onrender.com';
   const uri = new URL(base.includes('://') ? base : `https://${base}`);
@@ -61,7 +64,7 @@ export function useControlTowerRealtime(
         pendingPositionsRef.current = {};
         if (Object.keys(batch).length === 0) return;
         setLiveRiderPositions((prev) => ({ ...prev, ...batch }));
-      }, 250);
+      }, RIDER_POSITION_FLUSH_MS);
     });
 
     const bumpLists = () => {

@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Mapas offline (binários grandes: nunca versionar no Git)
+scripts/offline-maps/data/
+scripts/offline-maps/output/*.mbtiles
+*.osm.pbf
