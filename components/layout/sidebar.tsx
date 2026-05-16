@@ -16,7 +16,8 @@ import {
   AlertTriangle,
   FileText,
   Bell,
-  ShieldCheck
+  ShieldCheck,
+  Wallet
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -82,6 +83,12 @@ const navigation = [
     name: 'Financeiro',
     href: '/dashboard/financial',
     icon: DollarSign,
+  },
+  {
+    name: 'Repasses Asaas',
+    href: '/dashboard/settlements',
+    icon: Wallet,
+    description: 'Livro, lotes e transferências (entrega)',
   },
   {
     name: 'Assinantes',

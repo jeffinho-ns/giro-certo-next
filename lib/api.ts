@@ -58,11 +58,19 @@ class ApiClient {
       const response = await fetch(url, config);
       
       if (!response.ok) {
-        // Se for erro 401, limpar token
         if (response.status === 401) {
           this.setToken(null);
         }
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let message = `Erro HTTP ${response.status}`;
+        try {
+          const errBody = await response.json();
+          if (errBody && typeof errBody.error === 'string') {
+            message = errBody.error;
+          }
+        } catch {
+          /* corpo não JSON */
+        }
+        throw new Error(message);
       }
 
       const data = await response.json();
