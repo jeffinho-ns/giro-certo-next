@@ -213,6 +213,14 @@ export interface Partner {
   createdAt: string;
   updatedAt: string;
   payment?: PartnerPayment;
+  /** prepaid | postpaid_pix | authorize_capture */
+  delivery_payment_collection_mode?: string | null;
+  /** daily | weekly | monthly */
+  delivery_settlement_frequency?: string | null;
+  /** Perfil de repasse Asaas (conta ou chave PIX) */
+  payout_bank_account_json?: Record<string, unknown> | null;
+  /** Utilizadores do app com partnerId = esta loja */
+  linked_users?: Array<{ id: string; name: string; email: string | null }>;
 }
 
 export interface PartnerPayment {

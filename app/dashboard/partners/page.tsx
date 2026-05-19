@@ -27,8 +27,13 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProtectedRoute } from '@/components/auth/protected-route';
-import { Building2, MapPin, Phone, Mail, DollarSign, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
+import { Building2, MapPin, Phone, Mail, DollarSign } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { PartnerDeliveryPayoutPanel } from '@/components/partners/partner-delivery-payout-panel';
+import {
+  isPayoutProfileComplete,
+  PayoutProfileJson,
+} from '@/lib/partner-delivery-payout';
 
 export default function PartnersPage() {
   const { isAdmin } = useAuth();
@@ -291,6 +296,27 @@ export default function PartnersPage() {
                     )}
                   </div>
 
+                  {partner.type === PartnerType.STORE && (
+                    <div className="pt-2 border-t">
+                      <Badge
+                        variant="outline"
+                        className={
+                          isPayoutProfileComplete(
+                            partner.payout_bank_account_json as PayoutProfileJson | null
+                          )
+                            ? 'border-green-600 text-green-700'
+                            : 'border-amber-500 text-amber-700'
+                        }
+                      >
+                        {isPayoutProfileComplete(
+                          partner.payout_bank_account_json as PayoutProfileJson | null
+                        )
+                          ? 'Repasse entrega OK'
+                          : 'Repasse entrega pendente'}
+                      </Badge>
+                    </div>
+                  )}
+
                   {partner.payment && (
                     <div className="pt-2 border-t">
                       <div className="flex items-center justify-between">
@@ -307,7 +333,7 @@ export default function PartnersPage() {
                       className="flex-1"
                       onClick={() => {
                         setSelectedPartner(partner);
-                        setIsEditModalOpen(true);
+                        setIsEditModalOpen(false);
                       }}
                     >
                       Ver Detalhes
@@ -337,10 +363,12 @@ export default function PartnersPage() {
                 <DialogDescription>Detalhes completos do parceiro</DialogDescription>
               </DialogHeader>
 
-              <Tabs defaultValue="info" className="w-full">
+              <PartnerDeliveryPayoutPanel partner={partnerDetail.partner} />
+
+              <Tabs defaultValue="info" className="w-full mt-4">
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="info">Informações</TabsTrigger>
-                  <TabsTrigger value="financial">Financeiro</TabsTrigger>
+                  <TabsTrigger value="financial">Plano / mensalidade</TabsTrigger>
                   <TabsTrigger value="operational">Operacional</TabsTrigger>
                 </TabsList>
 
