@@ -91,7 +91,8 @@ export function formatBrl(value: number) {
 export function batchStatusLabel(status: string) {
   const map: Record<string, string> = {
     pending_transfer: 'Aguardando transferência',
-    no_transfer: 'Sem transferência (valor líquido zero)',
+    no_transfer:
+      'Sem transferência (líquido zero — taxa do lote ≥ bruto; veja GIRO_SETTLEMENT_WAIVE_BATCH_FEES no piloto)',
     transfer_requested: 'Transferência solicitada',
     transfer_done: 'Transferido',
     transfer_failed: 'Falha na transferência',
