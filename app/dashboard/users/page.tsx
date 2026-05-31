@@ -54,7 +54,7 @@ const isUserRole = (value: string): value is UserRole => {
 };
 
 const isUserType = (value: string): value is UserType => {
-  return Object.values(UserType).includes(value as UserType);
+  return Object.values(UserType).includes(value.toUpperCase() as UserType);
 };
 
 const isRiderType = (value: string): value is UserType => {
@@ -63,18 +63,25 @@ const isRiderType = (value: string): value is UserType => {
 
 const resolveUserType = (user: User): UserType | null => {
   if (user.userType && isUserType(user.userType)) {
-    return user.userType;
+    return user.userType.toUpperCase() as UserType;
   }
 
   switch (user.pilotProfile?.toUpperCase()) {
+    case 'CASUAL':
     case 'FIM_DE_SEMANA':
+    case 'FIM_SEMANA':
       return UserType.CASUAL;
+    case 'DIARIO':
     case 'URBANO':
       return UserType.DIARIO;
+    case 'RACING':
     case 'PISTA':
       return UserType.RACING;
+    case 'DELIVERY':
     case 'TRABALHO':
       return UserType.DELIVERY;
+    case 'LOJISTA':
+      return UserType.LOJISTA;
     default:
       return null;
   }

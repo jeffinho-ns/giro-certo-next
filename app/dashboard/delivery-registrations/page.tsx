@@ -239,11 +239,28 @@ export default function DeliveryRegistrationPage() {
       if (filterStatus !== 'all') params.append('status', filterStatus);
       params.append('limit', '50');
 
-      const response = await apiClient.get<
-        ReviewListApiResponse | DeliveryRegistration[]
-      >(
-        `/api/delivery-registration/pending/review-list?${params.toString()}`
-      );
+      const endpoints = [
+        '/api/delivery-registration/pending/review-list',
+        '/api/delivery-registration/review-list',
+        '/api/delivery-registration/admin/review-list',
+      ];
+
+      let response: ReviewListApiResponse | DeliveryRegistration[] | null = null;
+      let lastError: unknown;
+      for (const endpoint of endpoints) {
+        try {
+          response = await apiClient.get<
+            ReviewListApiResponse | DeliveryRegistration[]
+          >(`${endpoint}?${params.toString()}`);
+          break;
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      if (response == null) {
+        throw lastError ?? new Error('Falha ao carregar lista de aprovações');
+      }
 
       if (response && !Array.isArray(response) && response.registrations) {
         return response;
