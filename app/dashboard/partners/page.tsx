@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/lib/contexts/auth-context';
 import { Partner, PartnerPayment, PartnerType, PaymentPlanType, PaymentStatus } from '@/lib/types';
 import { apiClient } from '@/lib/api';
@@ -453,6 +453,7 @@ function EditPartnerDialog({
   onSave: (data: any) => void;
   isLoading: boolean;
 }) {
+  const isCreateMode = !partner;
   const [formData, setFormData] = useState({
     name: partner?.name || '',
     type: partner?.type || PartnerType.STORE,
@@ -467,10 +468,27 @@ function EditPartnerDialog({
     stateRegistration: partner?.stateRegistration || '',
     maxServiceRadius: partner?.maxServiceRadius?.toString() || '',
     avgPreparationTime: partner?.avgPreparationTime?.toString() || '',
+    password: '',
+    confirmPassword: '',
   });
+  const [passwordError, setPasswordError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setPasswordError('');
+
+    if (isCreateMode && formData.email.trim()) {
+      if (!formData.password || formData.password.length < 6) {
+        setPasswordError('A senha deve ter pelo menos 6 caracteres.');
+        return;
+      }
+
+      if (formData.password !== formData.confirmPassword) {
+        setPasswordError('A confirmação de senha não confere.');
+        return;
+      }
+    }
+
     onSave({
       ...formData,
       latitude: parseFloat(formData.latitude),
@@ -479,6 +497,8 @@ function EditPartnerDialog({
       avgPreparationTime: formData.avgPreparationTime
         ? parseInt(formData.avgPreparationTime)
         : null,
+      password: isCreateMode ? formData.password || undefined : undefined,
+      confirmPassword: undefined,
     });
   };
 
@@ -566,6 +586,42 @@ function EditPartnerDialog({
             />
           </div>
         </div>
+
+        {isCreateMode && (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Senha de acesso</Label>
+                <Input
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
+                  placeholder="Mínimo 6 caracteres"
+                  required={!!formData.email.trim()}
+                  minLength={6}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Confirmar senha</Label>
+                <Input
+                  type="password"
+                  value={formData.confirmPassword}
+                  onChange={(e) =>
+                    setFormData({ ...formData, confirmPassword: e.target.value })
+                  }
+                  placeholder="Repita a senha"
+                  required={!!formData.email.trim()}
+                  minLength={6}
+                />
+              </div>
+            </div>
+            {passwordError && (
+              <p className="text-sm text-destructive">{passwordError}</p>
+            )}
+          </>
+        )}
 
         <div className="space-y-2">
           <Label>CNPJ</Label>
