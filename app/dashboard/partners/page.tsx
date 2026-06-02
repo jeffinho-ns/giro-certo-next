@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProtectedRoute } from '@/components/auth/protected-route';
-import { Building2, MapPin, Phone, Mail, DollarSign } from 'lucide-react';
+import { Building2, MapPin, Phone, Mail, DollarSign, Trash2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PartnerDeliveryPayoutPanel } from '@/components/partners/partner-delivery-payout-panel';
 import {
@@ -86,6 +86,23 @@ export default function PartnersPage() {
       queryClient.invalidateQueries({ queryKey: ['partners'] });
       setIsEditModalOpen(false);
       setSelectedPartner(null);
+    },
+  });
+
+  // Excluir parceiro
+  const deletePartnerMutation = useMutation({
+    mutationFn: async (partnerId: string) => {
+      return apiClient.delete(`/api/partners/${partnerId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['partners'] });
+      queryClient.invalidateQueries({ queryKey: ['partner'] });
+      setSelectedPartner(null);
+    },
+    onError: (error: any) => {
+      const message =
+        error?.message || 'Não foi possível excluir o parceiro. Verifique vínculos existentes.';
+      alert(message);
     },
   });
 
@@ -169,6 +186,16 @@ export default function PartnersPage() {
         partnerId: partner.id,
         isBlocked: !partner.isBlocked,
       });
+    }
+  };
+
+  const handleDelete = async (partner: Partner) => {
+    if (
+      confirm(
+        `Tem certeza que deseja excluir o parceiro "${partner.name}" e todos os usuários vinculados?`
+      )
+    ) {
+      await deletePartnerMutation.mutateAsync(partner.id);
     }
   };
 
@@ -339,13 +366,24 @@ export default function PartnersPage() {
                       Ver Detalhes
                     </Button>
                     {isAdmin && (
-                      <Button
-                        variant={partner.isBlocked ? 'default' : 'destructive'}
-                        size="sm"
-                        onClick={() => handleBlock(partner)}
-                      >
-                        {partner.isBlocked ? 'Desbloquear' : 'Bloquear'}
-                      </Button>
+                      <>
+                        <Button
+                          variant={partner.isBlocked ? 'default' : 'destructive'}
+                          size="sm"
+                          onClick={() => handleBlock(partner)}
+                        >
+                          {partner.isBlocked ? 'Desbloquear' : 'Bloquear'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive border-destructive hover:bg-destructive/10"
+                          onClick={() => handleDelete(partner)}
+                          disabled={deletePartnerMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
                     )}
                   </div>
                 </CardContent>
@@ -409,6 +447,14 @@ export default function PartnersPage() {
                       onClick={() => handleBlock(partnerDetail.partner)}
                     >
                       {partnerDetail.partner.isBlocked ? 'Desbloquear' : 'Bloquear'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="text-destructive border-destructive hover:bg-destructive/10"
+                      onClick={() => handleDelete(partnerDetail.partner)}
+                      disabled={deletePartnerMutation.isPending}
+                    >
+                      {deletePartnerMutation.isPending ? 'Excluindo...' : 'Excluir parceiro'}
                     </Button>
                   </>
                 )}
