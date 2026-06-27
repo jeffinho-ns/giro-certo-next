@@ -10,6 +10,8 @@ interface ProtectedRouteProps {
   requiredRole?: UserRole;
   requireAdmin?: boolean;
   requireModerator?: boolean;
+  /** Exige usuário lojista (vinculado a uma loja via partnerId). */
+  requireLojista?: boolean;
 }
 
 export function ProtectedRoute({
@@ -17,9 +19,13 @@ export function ProtectedRoute({
   requiredRole,
   requireAdmin,
   requireModerator,
+  requireLojista,
 }: ProtectedRouteProps) {
   const { isAuthenticated, user, loading } = useAuth();
   const router = useRouter();
+
+  // Lojista = usuário comum vinculado a uma loja. Admin/moderador NÃO entram aqui.
+  const isLojista = !!user?.partnerId;
 
   useEffect(() => {
     if (!loading) {
@@ -28,14 +34,20 @@ export function ProtectedRoute({
         return;
       }
 
-      // Verificar permissões
-      if (requireAdmin && user?.role !== UserRole.ADMIN) {
+      // Separação total de áreas: lojista não acessa /dashboard e vice-versa.
+      if (requireLojista && !isLojista) {
         router.push('/dashboard');
         return;
       }
 
+      // Verificar permissões
+      if (requireAdmin && user?.role !== UserRole.ADMIN) {
+        router.push(isLojista ? '/minha-loja/pedidos' : '/dashboard');
+        return;
+      }
+
       if (requireModerator && user?.role !== UserRole.MODERATOR && user?.role !== UserRole.ADMIN) {
-        router.push('/dashboard');
+        router.push(isLojista ? '/minha-loja/pedidos' : '/dashboard');
         return;
       }
 
@@ -44,7 +56,7 @@ export function ProtectedRoute({
         return;
       }
     }
-  }, [isAuthenticated, user, loading, requireAdmin, requireModerator, requiredRole, router]);
+  }, [isAuthenticated, user, loading, requireAdmin, requireModerator, requireLojista, requiredRole, isLojista, router]);
 
   if (loading) {
     return (
@@ -59,6 +71,17 @@ export function ProtectedRoute({
 
   if (!isAuthenticated) {
     return null;
+  }
+
+  if (requireLojista && !isLojista) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2">Acesso Negado</h1>
+          <p className="text-muted-foreground">Esta área é exclusiva para lojistas.</p>
+        </div>
+      </div>
+    );
   }
 
   // Verificar permissões

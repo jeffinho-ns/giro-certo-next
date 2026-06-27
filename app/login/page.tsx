@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/auth-context';
+import { apiClient } from '@/lib/api';
+import { User, UserRole } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -51,8 +53,18 @@ export default function LoginPage() {
         localStorage.removeItem('save_credentials');
       }
       
-      // Redirecionar para o dashboard
-      window.location.href = '/dashboard';
+      // Redirecionar conforme o papel: lojista vai para o portal da loja.
+      let destination = '/dashboard';
+      try {
+        const me = await apiClient.get<{ user: User }>('/api/users/me/profile');
+        const u = me.user;
+        if (u.role !== UserRole.ADMIN && u.role !== UserRole.MODERATOR && u.partnerId) {
+          destination = '/minha-loja/pedidos';
+        }
+      } catch {
+        /* mantém destino padrão */
+      }
+      window.location.href = destination;
     } catch (err: any) {
       setError(err.message || 'Erro ao fazer login. Verifique suas credenciais.');
       setLoading(false);

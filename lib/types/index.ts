@@ -187,6 +187,8 @@ export interface Dispute {
 export interface Partner {
   id: string;
   name: string;
+  /** Identificador público da loja na URL da vitrine (/loja/<slug>). */
+  slug?: string | null;
   type: PartnerType;
   address: string;
   latitude: number;
@@ -318,6 +320,107 @@ export interface Alert {
   isRead: boolean;
   readAt: string | null;
   createdAt: string;
+}
+
+// ============================================
+// Loja Virtual (catálogo, pedidos)
+// ============================================
+
+export enum StoreOrderStatus {
+  awaiting_payment = 'awaiting_payment',
+  paid = 'paid',
+  accepted_by_store = 'accepted_by_store',
+  dispatched = 'dispatched',
+  in_delivery = 'in_delivery',
+  completed = 'completed',
+  cancelled = 'cancelled',
+  rejected = 'rejected',
+}
+
+export interface ProductCategory {
+  id: string;
+  partnerId: string;
+  name: string;
+  sortOrder: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductOption {
+  id: string;
+  optionGroupId: string;
+  name: string;
+  priceDelta: number;
+  active: boolean;
+  sortOrder: number;
+}
+
+export interface ProductOptionGroup {
+  id: string;
+  productId: string;
+  name: string;
+  minSelect: number;
+  maxSelect: number;
+  required: boolean;
+  sortOrder: number;
+  options?: ProductOption[];
+}
+
+export interface Product {
+  id: string;
+  partnerId: string;
+  categoryId: string | null;
+  name: string;
+  description: string | null;
+  basePrice: number;
+  photoUrl: string | null;
+  active: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+  optionGroups?: ProductOptionGroup[];
+}
+
+export interface SelectedOptionSnapshot {
+  groupName: string;
+  optionName: string;
+  priceDelta: number;
+}
+
+export interface StoreOrderItem {
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
+  selectedOptions: SelectedOptionSnapshot[];
+  notes?: string | null;
+}
+
+export interface StoreOrder {
+  id: string;
+  partnerId: string;
+  customerName: string;
+  customerPhone: string;
+  customerAddress: string;
+  customerLatitude: number | null;
+  customerLongitude: number | null;
+  notes: string | null;
+  subtotal: number;
+  deliveryFee: number;
+  total: number;
+  currency: string;
+  status: StoreOrderStatus;
+  trackingToken: string;
+  deliveryOrderId: string | null;
+  invoiceUrl: string | null;
+  createdAt: string;
+  paidAt: string | null;
+  acceptedAt: string | null;
+  dispatchedAt: string | null;
+  completedAt: string | null;
+  cancelledAt: string | null;
+  items?: StoreOrderItem[];
 }
 
 // Delivery Registration
