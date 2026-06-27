@@ -530,10 +530,18 @@ export interface PublicBanner {
   linkUrl: string | null;
 }
 
+export interface PublicReview {
+  rating: number;
+  comment: string | null;
+  customerName: string | null;
+  createdAt: string;
+}
+
 export interface PublicStorefront {
   store: PublicStore;
   banners: PublicBanner[];
   categories: PublicCatalogCategory[];
+  reviews?: PublicReview[];
 }
 
 export interface CreateStoreOrderItemInput {
@@ -597,6 +605,7 @@ export interface PublicOrderStatus {
   deliveryFee: number;
   total: number;
   currency: string;
+  reviewed?: boolean;
   timeline: {
     createdAt: string;
     paidAt: string | null;

@@ -46,6 +46,7 @@ export function StorefrontClient({
   storefront: PublicStorefront;
 }) {
   const { store, banners, categories } = storefront;
+  const reviews = storefront.reviews ?? [];
   const theme = store.themeColor || '#FF6B00';
   const [cart, setCart] = useState<CartLine[]>([]);
   const [activeProduct, setActiveProduct] = useState<PublicCatalogProduct | null>(null);
@@ -196,6 +197,46 @@ export function StorefrontClient({
             </div>
           </section>
         ))}
+
+        {/* Avaliações da loja */}
+        {(store.reviewCount > 0 || reviews.length > 0) && (
+          <section className="mt-8">
+            <div className="mb-3 flex items-center gap-2">
+              <h2 className="text-lg font-bold">Avaliações</h2>
+              {store.reviewCount > 0 && (
+                <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  {store.rating.toFixed(1)} ({store.reviewCount})
+                </span>
+              )}
+            </div>
+            <div className="space-y-3">
+              {reviews.length === 0 && (
+                <p className="text-sm text-muted-foreground">Ainda sem comentários.</p>
+              )}
+              {reviews.map((r, i) => (
+                <div key={i} className="rounded-lg border border-border bg-white p-3 dark:bg-gray-900">
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: 5 }).map((_, s) => (
+                      <Star
+                        key={s}
+                        className={`h-3.5 w-3.5 ${
+                          s < r.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                    {r.customerName && (
+                      <span className="ml-2 text-xs font-medium text-muted-foreground">
+                        {r.customerName}
+                      </span>
+                    )}
+                  </div>
+                  {r.comment && <p className="mt-1 text-sm">{r.comment}</p>}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
 
       {/* Barra de carrinho */}

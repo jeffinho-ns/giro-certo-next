@@ -11,6 +11,7 @@ import {
   Megaphone,
   Palette,
   Ticket,
+  Star,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiClient } from '@/lib/api';
@@ -30,6 +31,7 @@ const navigation = [
   { name: 'Produtos', href: '/minha-loja/produtos', icon: Package },
   { name: 'Promoções', href: '/minha-loja/promocoes', icon: Megaphone },
   { name: 'Cupons', href: '/minha-loja/cupons', icon: Ticket },
+  { name: 'Avaliações', href: '/minha-loja/avaliacoes', icon: Star },
   { name: 'Personalizar', href: '/minha-loja/personalizar', icon: Palette },
 ];
 

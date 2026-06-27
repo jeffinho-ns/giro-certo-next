@@ -1,11 +1,14 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import { PublicOrderStatus, StoreOrderStatus } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Circle, Clock, XCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { CheckCircle2, Circle, Clock, XCircle, Star } from 'lucide-react';
 
 const money = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n || 0);
@@ -156,6 +159,18 @@ export function OrderTracking({ token }: { token: string }) {
               </CardContent>
             </Card>
 
+            {!isCancelled &&
+              order.status !== StoreOrderStatus.awaiting_payment &&
+              (order.reviewed ? (
+                <Card>
+                  <CardContent className="py-4 text-center text-sm text-green-600">
+                    Obrigado pela sua avaliação!
+                  </CardContent>
+                </Card>
+              ) : (
+                <ReviewForm token={token} />
+              ))}
+
             <p className="text-center text-xs text-muted-foreground">
               Esta página atualiza automaticamente. Guarde o link para acompanhar.
             </p>
@@ -163,5 +178,67 @@ export function OrderTracking({ token }: { token: string }) {
         )}
       </div>
     </div>
+  );
+}
+
+function ReviewForm({ token }: { token: string }) {
+  const queryClient = useQueryClient();
+  const [rating, setRating] = useState(0);
+  const [hover, setHover] = useState(0);
+  const [comment, setComment] = useState('');
+  const [error, setError] = useState('');
+
+  const submit = useMutation({
+    mutationFn: () => {
+      if (rating < 1) throw new Error('Escolha uma nota de 1 a 5');
+      return apiClient.post(`/api/store/public/orders/${token}/review`, {
+        rating,
+        comment: comment.trim() || undefined,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['public-order', token] });
+    },
+    onError: (e: any) => setError(e?.message || 'Erro ao enviar avaliação'),
+  });
+
+  return (
+    <Card>
+      <CardContent className="space-y-3 py-4">
+        <p className="font-semibold">Avalie sua experiência</p>
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        <div className="flex items-center gap-1">
+          {Array.from({ length: 5 }).map((_, i) => {
+            const value = i + 1;
+            const filled = (hover || rating) >= value;
+            return (
+              <button
+                key={i}
+                type="button"
+                onMouseEnter={() => setHover(value)}
+                onMouseLeave={() => setHover(0)}
+                onClick={() => setRating(value)}
+                aria-label={`${value} estrela(s)`}
+              >
+                <Star
+                  className={`h-7 w-7 transition-colors ${
+                    filled ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                  }`}
+                />
+              </button>
+            );
+          })}
+        </div>
+        <Textarea
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="Conte como foi (opcional)"
+          rows={3}
+        />
+        <Button onClick={() => submit.mutate()} disabled={submit.isPending}>
+          {submit.isPending ? 'Enviando...' : 'Enviar avaliação'}
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
