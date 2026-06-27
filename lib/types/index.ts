@@ -397,6 +397,23 @@ export interface StoreOrderItem {
   notes?: string | null;
 }
 
+export type CouponDiscountType = 'percent' | 'fixed';
+
+export interface StoreCoupon {
+  id: string;
+  partnerId: string;
+  code: string;
+  discountType: CouponDiscountType;
+  discountValue: number;
+  minSubtotal: number;
+  maxUses: number | null;
+  usedCount: number;
+  active: boolean;
+  expiresAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface StoreAppearance {
   id: string;
   name: string;
@@ -433,6 +450,8 @@ export interface StoreOrder {
   customerLongitude: number | null;
   notes: string | null;
   subtotal: number;
+  discount?: number;
+  couponCode?: string | null;
   deliveryFee: number;
   total: number;
   currency: string;
@@ -540,9 +559,18 @@ export interface CreatedStoreOrder {
   trackingToken: string;
   status: StoreOrderStatus;
   subtotal: number;
+  discount?: number;
+  couponCode?: string | null;
   deliveryFee: number;
   total: number;
   currency: string;
+}
+
+export interface CouponPreview {
+  code: string;
+  discountType: CouponDiscountType;
+  discountValue: number;
+  discount: number;
 }
 
 export interface StoreCheckoutResult {
@@ -564,6 +592,8 @@ export interface PublicOrderStatus {
     selectedOptions: SelectedOptionSnapshot[];
   }>;
   subtotal: number;
+  discount?: number;
+  couponCode?: string | null;
   deliveryFee: number;
   total: number;
   currency: string;

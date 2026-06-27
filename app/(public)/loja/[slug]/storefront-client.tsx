@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import {
+  CouponPreview,
   CreatedStoreOrder,
   PublicCatalogProduct,
   PublicStorefront,
@@ -414,6 +415,37 @@ function CheckoutDialog({
   const [order, setOrder] = useState<CreatedStoreOrder | null>(null);
   const [payment, setPayment] = useState<StoreCheckoutResult | null>(null);
   const [copied, setCopied] = useState(false);
+  const [couponInput, setCouponInput] = useState('');
+  const [coupon, setCoupon] = useState<CouponPreview | null>(null);
+  const [couponError, setCouponError] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+
+  const discount = coupon?.discount ?? 0;
+  const totalWithDiscount = Math.max(0, subtotal - discount);
+
+  const applyCoupon = async () => {
+    setCouponError('');
+    if (!couponInput.trim()) return;
+    setCouponLoading(true);
+    try {
+      const res = await apiClient.post<CouponPreview>(
+        `/api/store/public/${slug}/coupon/preview`,
+        { code: couponInput.trim(), subtotal }
+      );
+      setCoupon(res);
+    } catch (e: any) {
+      setCoupon(null);
+      setCouponError(e?.message || 'Cupom inválido');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setCoupon(null);
+    setCouponInput('');
+    setCouponError('');
+  };
 
   const useMyLocation = () => {
     if (!navigator.geolocation) {
@@ -453,6 +485,7 @@ function CheckoutDialog({
         customerLatitude: coords?.lat,
         customerLongitude: coords?.lng,
         notes: notes.trim() || undefined,
+        couponCode: coupon?.code,
         items: cart.map((l) => ({
           productId: l.product.id,
           quantity: l.quantity,
@@ -541,9 +574,49 @@ function CheckoutDialog({
                 <span className="whitespace-nowrap font-semibold">{money(l.unitPrice * l.quantity)}</span>
               </div>
             ))}
-            <div className="flex justify-between font-semibold">
-              <span>Subtotal</span>
-              <span>{money(subtotal)}</span>
+            {/* Cupom de desconto */}
+            <div className="space-y-2 rounded-lg border border-dashed border-border p-3">
+              {coupon ? (
+                <div className="flex items-center justify-between">
+                  <div className="text-sm">
+                    <span className="font-mono font-semibold">{coupon.code}</span>{' '}
+                    <span className="text-green-600">aplicado (-{money(coupon.discount)})</span>
+                  </div>
+                  <button className="text-xs text-muted-foreground hover:text-red-600" onClick={removeCoupon}>
+                    remover
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                    placeholder="Cupom de desconto"
+                    className="h-9 font-mono"
+                  />
+                  <Button variant="outline" className="h-9" onClick={applyCoupon} disabled={couponLoading}>
+                    {couponLoading ? '...' : 'Aplicar'}
+                  </Button>
+                </div>
+              )}
+              {couponError && <p className="text-xs text-red-600">{couponError}</p>}
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span>Subtotal</span>
+                <span>{money(subtotal)}</span>
+              </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>Desconto</span>
+                  <span>-{money(discount)}</span>
+                </div>
+              )}
+              <div className="flex justify-between font-semibold">
+                <span>Total parcial</span>
+                <span>{money(totalWithDiscount)}</span>
+              </div>
             </div>
             <p className="text-xs text-muted-foreground">A taxa de entrega é calculada no próximo passo.</p>
           </div>
@@ -587,6 +660,12 @@ function CheckoutDialog({
                   <span>Subtotal</span>
                   <span>{money(order.subtotal)}</span>
                 </div>
+                {!!order.discount && order.discount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Desconto{order.couponCode ? ` (${order.couponCode})` : ''}</span>
+                    <span>-{money(order.discount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-muted-foreground">
                   <span>Taxa de entrega</span>
                   <span>{money(order.deliveryFee)}</span>

@@ -3,7 +3,15 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { ClipboardList, Package, Store, ExternalLink, Megaphone, Palette } from 'lucide-react';
+import {
+  ClipboardList,
+  Package,
+  Store,
+  ExternalLink,
+  Megaphone,
+  Palette,
+  Ticket,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiClient } from '@/lib/api';
 import { Partner } from '@/lib/types';
@@ -21,6 +29,7 @@ const navigation = [
   { name: 'Pedidos', href: '/minha-loja/pedidos', icon: ClipboardList },
   { name: 'Produtos', href: '/minha-loja/produtos', icon: Package },
   { name: 'Promoções', href: '/minha-loja/promocoes', icon: Megaphone },
+  { name: 'Cupons', href: '/minha-loja/cupons', icon: Ticket },
   { name: 'Personalizar', href: '/minha-loja/personalizar', icon: Palette },
 ];
 

@@ -138,6 +138,12 @@ export function OrderTracking({ token }: { token: string }) {
                     <span>Subtotal</span>
                     <span>{money(order.subtotal)}</span>
                   </div>
+                  {!!order.discount && order.discount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Desconto{order.couponCode ? ` (${order.couponCode})` : ''}</span>
+                      <span>-{money(order.discount)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-muted-foreground">
                     <span>Taxa de entrega</span>
                     <span>{money(order.deliveryFee)}</span>
