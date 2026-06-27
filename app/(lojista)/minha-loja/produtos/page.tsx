@@ -26,6 +26,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Plus, Pencil, Trash2, Settings2, Tag } from 'lucide-react';
+import { ImageUploadField } from '@/components/store/image-upload-field';
 
 const money = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n || 0);
@@ -307,10 +308,12 @@ function ProductDialog({
               </Select>
             </div>
           </div>
-          <div className="space-y-2">
-            <Label>URL da foto (opcional)</Label>
-            <Input value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} placeholder="https://..." />
-          </div>
+          <ImageUploadField
+            label="Foto do produto (opcional)"
+            value={photoUrl}
+            onChange={setPhotoUrl}
+            aspect="wide"
+          />
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
             Produto ativo (visível na vitrine)

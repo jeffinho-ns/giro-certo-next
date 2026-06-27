@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ImageUploadField } from '@/components/store/image-upload-field';
 
 const PRESET_COLORS = ['#FF6B00', '#E11D48', '#16A34A', '#2563EB', '#7C3AED', '#0891B2', '#CA8A04'];
 
@@ -127,14 +128,20 @@ export default function PersonalizarPage() {
               placeholder="Ex.: Os melhores lanches artesanais da cidade"
             />
           </div>
-          <div className="space-y-2">
-            <Label>URL do logo</Label>
-            <Input value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} placeholder="https://..." />
-          </div>
-          <div className="space-y-2">
-            <Label>URL da capa</Label>
-            <Input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="https://..." />
-          </div>
+          <ImageUploadField
+            label="Logo da loja"
+            value={photoUrl}
+            onChange={setPhotoUrl}
+            aspect="square"
+            entityId={data?.appearance?.id}
+          />
+          <ImageUploadField
+            label="Capa da loja"
+            value={coverUrl}
+            onChange={setCoverUrl}
+            aspect="wide"
+            entityId={data?.appearance?.id}
+          />
           <div className="space-y-2">
             <Label>Cor de destaque</Label>
             <div className="flex flex-wrap items-center gap-2">

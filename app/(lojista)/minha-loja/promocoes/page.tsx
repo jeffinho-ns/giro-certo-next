@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Plus, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
+import { ImageUploadField } from '@/components/store/image-upload-field';
 
 export default function PromocoesPage() {
   const queryClient = useQueryClient();
@@ -195,16 +196,12 @@ function BannerDialog({
         </DialogHeader>
         <div className="space-y-4">
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <div className="space-y-2">
-            <Label>URL da imagem</Label>
-            <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." />
-          </div>
-          {imageUrl.trim() && (
-            <div className="relative h-32 w-full overflow-hidden rounded-lg bg-muted">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={imageUrl} alt="" className="h-full w-full object-cover" />
-            </div>
-          )}
+          <ImageUploadField
+            label="Imagem do banner"
+            value={imageUrl}
+            onChange={setImageUrl}
+            aspect="wide"
+          />
           <div className="space-y-2">
             <Label>Título (opcional)</Label>
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex.: Combo do dia" />

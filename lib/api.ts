@@ -105,6 +105,35 @@ class ApiClient {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' });
   }
 
+  /**
+   * Upload de imagem (multipart). Reusa o endpoint de imagens da API
+   * (Firebase Storage) e retorna a URL absoluta. entityId é apenas o
+   * escopo de pasta; o vínculo real é salvar a URL no recurso da loja.
+   */
+  async uploadImage(file: File, entityId: string = 'store'): Promise<string> {
+    const form = new FormData();
+    form.append('image', file);
+    const url = `${this.baseURL}/api/images/upload/partner/${encodeURIComponent(entityId)}`;
+    const headers: Record<string, string> = {};
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+
+    const response = await fetch(url, { method: 'POST', headers, body: form });
+    if (!response.ok) {
+      let message = `Erro HTTP ${response.status}`;
+      try {
+        const errBody = await response.json();
+        if (errBody && typeof errBody.error === 'string') message = errBody.error;
+      } catch {
+        /* corpo não JSON */
+      }
+      throw new Error(message);
+    }
+    const data = await response.json();
+    const imageUrl = data?.image?.url as string | undefined;
+    if (!imageUrl) throw new Error('Resposta de upload sem URL');
+    return imageUrl;
+  }
+
   // Health check
   async health(): Promise<ApiResponse> {
     return this.get<ApiResponse>('/health');
