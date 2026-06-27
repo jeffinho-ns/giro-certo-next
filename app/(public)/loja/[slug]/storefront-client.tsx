@@ -45,6 +45,7 @@ export function StorefrontClient({
   storefront: PublicStorefront;
 }) {
   const { store, banners, categories } = storefront;
+  const theme = store.themeColor || '#FF6B00';
   const [cart, setCart] = useState<CartLine[]>([]);
   const [activeProduct, setActiveProduct] = useState<PublicCatalogProduct | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -76,6 +77,14 @@ export function StorefrontClient({
 
   return (
     <div className="min-h-screen bg-gray-50 pb-28 dark:bg-gray-950">
+      {/* Capa (hero) */}
+      {store.coverUrl && (
+        <div className="relative h-40 w-full sm:h-52">
+          <Image src={store.coverUrl} alt="" fill className="object-cover" unoptimized priority />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+        </div>
+      )}
+
       {/* Cabeçalho da loja */}
       <header className="bg-white shadow-sm dark:bg-gray-900">
         <div className="mx-auto max-w-3xl px-4 py-6">
@@ -119,6 +128,9 @@ export function StorefrontClient({
               </div>
             </div>
           </div>
+          {store.description && (
+            <p className="mt-3 text-sm text-muted-foreground">{store.description}</p>
+          )}
         </div>
       </header>
 
@@ -160,7 +172,9 @@ export function StorefrontClient({
                     {p.description && (
                       <p className="line-clamp-2 text-sm text-muted-foreground">{p.description}</p>
                     )}
-                    <p className="mt-1 font-semibold text-primary">{money(p.basePrice)}</p>
+                    <p className="mt-1 font-semibold" style={{ color: theme }}>
+                      {money(p.basePrice)}
+                    </p>
                   </div>
                   {p.photoUrl ? (
                     <Image
@@ -192,7 +206,7 @@ export function StorefrontClient({
               <span className="font-semibold">{money(subtotal)}</span>
               <span className="block text-xs text-muted-foreground">+ taxa de entrega no checkout</span>
             </div>
-            <Button onClick={() => setCheckoutOpen(true)}>
+            <Button onClick={() => setCheckoutOpen(true)} style={{ backgroundColor: theme }}>
               <ShoppingBag className="mr-2 h-4 w-4" /> Ver carrinho
             </Button>
           </div>

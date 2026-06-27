@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { ClipboardList, Package, Store, ExternalLink } from 'lucide-react';
+import { ClipboardList, Package, Store, ExternalLink, Megaphone, Palette } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiClient } from '@/lib/api';
 import { Partner } from '@/lib/types';
@@ -20,6 +20,8 @@ import {
 const navigation = [
   { name: 'Pedidos', href: '/minha-loja/pedidos', icon: ClipboardList },
   { name: 'Produtos', href: '/minha-loja/produtos', icon: Package },
+  { name: 'Promoções', href: '/minha-loja/promocoes', icon: Megaphone },
+  { name: 'Personalizar', href: '/minha-loja/personalizar', icon: Palette },
 ];
 
 function getInitials(name: string) {

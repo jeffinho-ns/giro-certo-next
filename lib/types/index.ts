@@ -397,6 +397,32 @@ export interface StoreOrderItem {
   notes?: string | null;
 }
 
+export interface StoreAppearance {
+  id: string;
+  name: string;
+  slug: string | null;
+  tradingName: string | null;
+  photoUrl: string | null;
+  coverUrl: string | null;
+  themeColor: string | null;
+  description: string | null;
+}
+
+export interface StoreBanner {
+  id: string;
+  partnerId: string;
+  imageUrl: string;
+  title: string | null;
+  linkUrl: string | null;
+  discount: number | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  active: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface StoreOrder {
   id: string;
   partnerId: string;
@@ -433,6 +459,9 @@ export interface PublicStore {
   name: string;
   tradingName: string | null;
   photoUrl: string | null;
+  coverUrl: string | null;
+  themeColor: string | null;
+  description: string | null;
   address: string;
   latitude: number;
   longitude: number;
