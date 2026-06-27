@@ -423,6 +423,132 @@ export interface StoreOrder {
   items?: StoreOrderItem[];
 }
 
+// ============================================
+// Loja Virtual — vitrine pública (DTOs reduzidos)
+// ============================================
+
+export interface PublicStore {
+  id: string;
+  slug: string;
+  name: string;
+  tradingName: string | null;
+  photoUrl: string | null;
+  address: string;
+  latitude: number;
+  longitude: number;
+  phone: string | null;
+  avgPreparationTime: number | null;
+  operatingHours: any | null;
+  rating: number;
+  reviewCount: number;
+  isOpen: boolean;
+}
+
+export interface PublicOption {
+  id: string;
+  name: string;
+  priceDelta: number;
+}
+
+export interface PublicOptionGroup {
+  id: string;
+  name: string;
+  minSelect: number;
+  maxSelect: number;
+  required: boolean;
+  options: PublicOption[];
+}
+
+export interface PublicCatalogProduct {
+  id: string;
+  categoryId: string | null;
+  name: string;
+  description: string | null;
+  basePrice: number;
+  photoUrl: string | null;
+  optionGroups: PublicOptionGroup[];
+}
+
+export interface PublicCatalogCategory {
+  id: string;
+  name: string;
+  products: PublicCatalogProduct[];
+}
+
+export interface PublicBanner {
+  id: string;
+  imageUrl: string;
+  title: string | null;
+  linkUrl: string | null;
+}
+
+export interface PublicStorefront {
+  store: PublicStore;
+  banners: PublicBanner[];
+  categories: PublicCatalogCategory[];
+}
+
+export interface CreateStoreOrderItemInput {
+  productId: string;
+  quantity: number;
+  selectedOptionIds?: string[];
+  notes?: string;
+}
+
+export interface CreateStoreOrderInput {
+  customerName: string;
+  customerPhone: string;
+  customerAddress: string;
+  customerCpf?: string;
+  customerLatitude?: number;
+  customerLongitude?: number;
+  notes?: string;
+  items: CreateStoreOrderItemInput[];
+}
+
+export interface CreatedStoreOrder {
+  id: string;
+  trackingToken: string;
+  status: StoreOrderStatus;
+  subtotal: number;
+  deliveryFee: number;
+  total: number;
+  currency: string;
+}
+
+export interface StoreCheckoutResult {
+  status: StoreOrderStatus;
+  invoiceUrl: string | null;
+  billingType: string;
+  pix: { encodedImage?: string; payload?: string; expirationDate?: string } | null;
+}
+
+export interface PublicOrderStatus {
+  id: string;
+  status: StoreOrderStatus;
+  store: { name: string; slug: string };
+  items: Array<{
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    lineTotal: number;
+    selectedOptions: SelectedOptionSnapshot[];
+  }>;
+  subtotal: number;
+  deliveryFee: number;
+  total: number;
+  currency: string;
+  timeline: {
+    createdAt: string;
+    paidAt: string | null;
+    acceptedAt: string | null;
+    dispatchedAt: string | null;
+    completedAt: string | null;
+    cancelledAt: string | null;
+  };
+  hasDelivery: boolean;
+}
+
 // Delivery Registration
 export enum DeliveryRegistrationStatus {
   PENDING = 'PENDING',
