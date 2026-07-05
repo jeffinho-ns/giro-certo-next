@@ -29,6 +29,7 @@ import {
 import { Minus, Plus, ShoppingBag, Trash2, MapPin, Star, Clock, Copy, Check } from 'lucide-react';
 import { formatOperatingHoursSummary } from '@/lib/store/operating-hours';
 import { AddressAutocompleteField } from '@/components/store/address-autocomplete-field';
+import { usePublicStoreOrderSse } from '@/hooks/use-sse-stream';
 
 const money = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n || 0);
@@ -499,7 +500,20 @@ function CheckoutDialog({
   const discount = coupon?.discount ?? 0;
   const totalWithDiscount = Math.max(0, subtotal - discount);
 
-  // Poll do status após gerar o PIX — a página de acompanhamento também faz poll.
+  usePublicStoreOrderSse(
+    order?.trackingToken ?? '',
+    step === 'payment' && !!order?.trackingToken && !paymentConfirmed,
+    (event, data) => {
+      if (event === 'store_order:update') {
+        const d = data as { status?: string; paid?: boolean };
+        if (d?.paid || (d?.status && d.status !== StoreOrderStatus.awaiting_payment)) {
+          setPaymentConfirmed(true);
+        }
+      }
+    }
+  );
+
+  // Fallback: poll lento se SSE não conectar.
   useEffect(() => {
     if (step !== 'payment' || !order?.trackingToken || paymentConfirmed) return;
     let cancelled = false;
@@ -514,11 +528,10 @@ function CheckoutDialog({
           setPaymentConfirmed(true);
         }
       } catch {
-        // silencioso: o usuário ainda pode ir para /pedido/[token]
+        /* silencioso */
       }
     };
-    poll();
-    const id = setInterval(poll, 5000);
+    const id = setInterval(poll, 60_000);
     return () => {
       cancelled = true;
       clearInterval(id);

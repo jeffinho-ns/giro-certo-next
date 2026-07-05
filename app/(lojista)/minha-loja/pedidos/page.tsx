@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { CheckCircle2, XCircle, Clock, Package, MapPin, Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuthenticatedSse } from '@/hooks/use-sse-stream';
 
 const money = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n || 0);
@@ -65,11 +66,22 @@ export default function PedidosPage() {
   const [tab, setTab] = useState<TabKey>('novos');
   const [detailId, setDetailId] = useState<string | null>(null);
 
-  // Poll mais rápido na aba de pagos (Novos) para o lojista reagir a tempo.
+  // SSE em tempo real; poll lento como fallback.
   const { data, isLoading } = useQuery<{ orders: StoreOrder[] }>({
     queryKey: ['store', 'orders'],
     queryFn: () => apiClient.get('/api/store/manage/orders?limit=100'),
-    refetchInterval: tab === 'novos' ? 15000 : 30000,
+    refetchInterval: 120_000,
+  });
+
+  useAuthenticatedSse(true, (event) => {
+    if (
+      event === 'delivery:store_refresh' ||
+      event === 'store_order:update' ||
+      event === 'delivery:status:changed' ||
+      event === 'delivery:update'
+    ) {
+      void queryClient.invalidateQueries({ queryKey: ['store', 'orders'] });
+    }
   });
   const orders = useMemo(() => data?.orders ?? [], [data]);
 

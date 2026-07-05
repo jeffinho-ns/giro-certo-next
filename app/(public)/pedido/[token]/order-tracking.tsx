@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle2, Circle, Clock, XCircle, Star } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { usePublicStoreOrderSse } from '@/hooks/use-sse-stream';
 import { usePublicOrderTracking } from '@/hooks/use-public-order-tracking';
 
 const OrderTrackingMap = dynamic(
@@ -45,15 +46,23 @@ const STEPS: { key: string; label: string; field: keyof PublicOrderStatus['timel
 ];
 
 export function OrderTracking({ token }: { token: string }) {
+  const queryClient = useQueryClient();
+
   const { data, isLoading, isError } = useQuery<{ order: PublicOrderStatus }>({
     queryKey: ['public-order', token],
     queryFn: () => apiClient.get(`/api/store/public/orders/${token}`),
-    refetchInterval: (query) => {
-      const status = query.state.data?.order?.status;
-      // Poll mais rápido enquanto aguarda pagamento; depois 15s.
-      if (status === StoreOrderStatus.awaiting_payment) return 5000;
-      return 15000;
-    },
+    // SSE em tempo real; poll lento só como fallback se a conexão cair.
+    refetchInterval: 120_000,
+  });
+
+  usePublicStoreOrderSse(token, !!token, (event) => {
+    if (
+      event === 'store_order:update' ||
+      event === 'delivery:status:changed' ||
+      event === 'delivery:update'
+    ) {
+      void queryClient.invalidateQueries({ queryKey: ['public-order', token] });
+    }
   });
 
   const order = data?.order;

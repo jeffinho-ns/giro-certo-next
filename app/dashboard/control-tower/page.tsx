@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { useControlTowerRealtime } from '@/hooks/use-control-tower-realtime';
+import { useAuthenticatedSse } from '@/hooks/use-sse-stream';
 import { useAuth } from '@/lib/contexts/auth-context';
 import {
   describeRiderOperationalLeg,
@@ -83,7 +84,7 @@ export default function ControlTowerPage() {
       return apiClient.get<{ riders: ActiveRider[] }>(url);
     },
     staleTime: 12_000,
-    refetchInterval: 30_000,
+    refetchInterval: 120_000,
     refetchOnWindowFocus: false,
   });
 
@@ -98,7 +99,7 @@ export default function ControlTowerPage() {
       return apiClient.get<{ orders: ControlTowerOrderMarker[] }>(url);
     },
     staleTime: 12_000,
-    refetchInterval: 30_000,
+    refetchInterval: 120_000,
     refetchOnWindowFocus: false,
   });
 
@@ -108,6 +109,18 @@ export default function ControlTowerPage() {
   }, [isAdmin, orders?.orders]);
 
   useControlTowerRealtime(queryClient, setLiveRiderPositions, trackedOrderIds);
+
+  useAuthenticatedSse(isAdmin, (event) => {
+    if (
+      event === 'delivery:status:changed' ||
+      event === 'delivery:update' ||
+      event === 'rider:location:update'
+    ) {
+      void queryClient.invalidateQueries({ queryKey: ['active-riders'] });
+      void queryClient.invalidateQueries({ queryKey: ['dashboard-orders'] });
+      void queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+    }
+  });
 
   const mergedRiders: ActiveRider[] = useMemo(() => {
     const list = activeRiders?.riders ?? [];
