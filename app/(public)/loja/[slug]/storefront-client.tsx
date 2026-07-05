@@ -27,6 +27,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Minus, Plus, ShoppingBag, Trash2, MapPin, Star, Clock, Copy, Check } from 'lucide-react';
+import { formatOperatingHoursSummary } from '@/lib/store/operating-hours';
+import { AddressAutocompleteField } from '@/components/store/address-autocomplete-field';
 
 const money = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n || 0);
@@ -49,6 +51,10 @@ export function StorefrontClient({
 }) {
   const { store, banners, categories } = storefront;
   const reviews = storefront.reviews ?? [];
+  const hoursSummary = useMemo(
+    () => formatOperatingHoursSummary(store.operatingHours),
+    [store.operatingHours]
+  );
   const theme = store.themeColor || '#FF6B00';
   const [cart, setCart] = useState<CartLine[]>([]);
   const [activeProduct, setActiveProduct] = useState<PublicCatalogProduct | null>(null);
@@ -137,8 +143,18 @@ export function StorefrontClient({
           )}
           {!store.isOpen && (
             <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100">
-              Esta loja está fechada no momento. Você pode ver o cardápio, mas não é possível
-              fazer pedidos agora.
+              <p>Esta loja está fechada no momento. Você pode ver o cardápio, mas não é possível
+              fazer pedidos agora.</p>
+              {hoursSummary.length > 0 && (
+                <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-4">
+                  {hoursSummary.map((row) => (
+                    <div key={row.label} className="flex justify-between gap-2">
+                      <span className="font-medium">{row.label}</span>
+                      <span>{row.hours}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -723,8 +739,11 @@ function CheckoutDialog({
               <Input value={cpf} onChange={(e) => setCpf(e.target.value)} placeholder="000.000.000-00" inputMode="numeric" />
             </div>
             <div className="space-y-1">
-              <Label>Endereço de entrega</Label>
-              <Textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Rua, número, bairro, complemento" />
+              <AddressAutocompleteField
+                value={address}
+                onChange={setAddress}
+                onCoords={setCoords}
+              />
             </div>
             <div className="space-y-1">
               <Label>Observações (opcional)</Label>
