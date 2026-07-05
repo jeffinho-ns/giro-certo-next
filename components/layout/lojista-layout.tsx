@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
@@ -12,6 +13,9 @@ import {
   Palette,
   Ticket,
   Star,
+  Settings,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiClient } from '@/lib/api';
@@ -33,6 +37,7 @@ const navigation = [
   { name: 'Cupons', href: '/minha-loja/cupons', icon: Ticket },
   { name: 'Avaliações', href: '/minha-loja/avaliacoes', icon: Star },
   { name: 'Personalizar', href: '/minha-loja/personalizar', icon: Palette },
+  { name: 'Configurações', href: '/minha-loja/configuracoes', icon: Settings },
 ];
 
 function getInitials(name: string) {
@@ -54,6 +59,17 @@ export function LojistaLayout({ children }: { children: React.ReactNode }) {
     queryFn: () => apiClient.get<{ partner: Partner }>('/api/partners/me'),
   });
   const partner = data?.partner;
+  const [copied, setCopied] = useState(false);
+
+  const storefrontPath = partner?.slug ? `/loja/${partner.slug}` : null;
+
+  const copyStorefront = async () => {
+    if (!storefrontPath || typeof window === 'undefined') return;
+    const full = `${window.location.origin}${storefrontPath}`;
+    await navigator.clipboard.writeText(full);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -99,16 +115,36 @@ export function LojistaLayout({ children }: { children: React.ReactNode }) {
           </nav>
 
           {partner?.slug && (
-            <div className="border-t border-border px-3 py-3">
-              <a
-                href={`/loja/${partner.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <ExternalLink className="h-4 w-4" />
-                <span>Ver minha vitrine</span>
-              </a>
+            <div className="space-y-1 border-t border-border px-3 py-3">
+              <p className="px-3 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                Vitrine pública
+              </p>
+              <p className="truncate px-3 font-mono text-xs text-foreground">
+                /loja/{partner.slug}
+              </p>
+              <div className="flex gap-1">
+                <a
+                  href={storefrontPath!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-1 items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  <span>Abrir</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={copyStorefront}
+                  className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  {copied ? (
+                    <Check className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                  <span>{copied ? 'Copiado' : 'Copiar'}</span>
+                </button>
+              </div>
             </div>
           )}
         </div>
