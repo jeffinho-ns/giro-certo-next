@@ -9,6 +9,18 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle2, Circle, Clock, XCircle, Star } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { usePublicOrderTracking } from '@/hooks/use-public-order-tracking';
+
+const OrderTrackingMap = dynamic(
+  () =>
+    import('@/components/store/order-tracking-map').then((m) => m.OrderTrackingMap),
+  { ssr: false, loading: () => (
+    <div className="flex h-56 items-center justify-center rounded-lg border border-border bg-muted text-sm text-muted-foreground">
+      Carregando mapa...
+    </div>
+  )}
+);
 
 const money = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n || 0);
@@ -36,12 +48,19 @@ export function OrderTracking({ token }: { token: string }) {
   const { data, isLoading, isError } = useQuery<{ order: PublicOrderStatus }>({
     queryKey: ['public-order', token],
     queryFn: () => apiClient.get(`/api/store/public/orders/${token}`),
-    refetchInterval: 15000,
+    refetchInterval: (query) => {
+      const status = query.state.data?.order?.status;
+      // Poll mais rápido enquanto aguarda pagamento; depois 15s.
+      if (status === StoreOrderStatus.awaiting_payment) return 5000;
+      return 15000;
+    },
   });
 
   const order = data?.order;
   const isCancelled =
     order?.status === StoreOrderStatus.cancelled || order?.status === StoreOrderStatus.rejected;
+  const mapEnabled = !!order?.hasDelivery && !isCancelled && order?.tracking?.active !== false;
+  const { rider: liveRider } = usePublicOrderTracking(token, mapEnabled);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 dark:bg-gray-950">
@@ -72,8 +91,34 @@ export function OrderTracking({ token }: { token: string }) {
                 ) : (
                   <Badge className="text-sm">{STATUS_LABEL[order.status]}</Badge>
                 )}
+                {order.status === StoreOrderStatus.awaiting_payment && (
+                  <p className="pt-2 text-xs text-amber-600">
+                    Aguardando confirmação do pagamento PIX...
+                  </p>
+                )}
               </CardContent>
             </Card>
+
+            {order.tracking && order.hasDelivery && !isCancelled && (
+              <Card>
+                <CardContent className="space-y-2 p-4">
+                  <p className="text-sm font-semibold">
+                    {order.tracking.active
+                      ? 'Acompanhe o entregador'
+                      : 'Rota da entrega'}
+                  </p>
+                  <OrderTrackingMap
+                    tracking={order.tracking}
+                    liveRider={liveRider}
+                  />
+                  {order.tracking.active && (
+                    <p className="text-xs text-muted-foreground">
+                      Posição atualizada em tempo real enquanto a entrega estiver ativa.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {!isCancelled && (
               <Card>

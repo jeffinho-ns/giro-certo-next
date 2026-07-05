@@ -17,17 +17,15 @@ export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
 
-  // Carregar credenciais salvas ao montar o componente
+  // Carrega só o e-mail salvo (nunca a senha — risco de XSS/roubo de sessão).
   useEffect(() => {
     const savedEmail = localStorage.getItem('saved_email');
-    const savedPassword = localStorage.getItem('saved_password');
     const shouldSave = localStorage.getItem('save_credentials') === 'true';
-    
+    // Limpa senha legada se ainda existir de versões anteriores.
+    localStorage.removeItem('saved_password');
+
     if (savedEmail) {
       setEmail(savedEmail);
-    }
-    if (savedPassword && shouldSave) {
-      setPassword(savedPassword);
     }
     if (shouldSave) {
       setSaveCredentials(true);
@@ -42,16 +40,15 @@ export default function LoginPage() {
     try {
       await login(email, password);
       
-      // Salvar ou remover credenciais baseado na opção
+      // Salva apenas o e-mail (nunca a senha).
       if (saveCredentials) {
         localStorage.setItem('saved_email', email);
-        localStorage.setItem('saved_password', password);
         localStorage.setItem('save_credentials', 'true');
       } else {
         localStorage.removeItem('saved_email');
-        localStorage.removeItem('saved_password');
         localStorage.removeItem('save_credentials');
       }
+      localStorage.removeItem('saved_password');
       
       // Redirecionar conforme o papel: lojista vai para o portal da loja.
       let destination = '/dashboard';
@@ -133,7 +130,7 @@ export default function LoginPage() {
                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
               />
               <label htmlFor="save-credentials" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                Salvar dados de acesso
+                Lembrar e-mail
               </label>
             </div>
 

@@ -615,6 +615,16 @@ export interface PublicOrderStatus {
     cancelledAt: string | null;
   };
   hasDelivery: boolean;
+  /** Posições para o mapa (rider só quando entrega ativa). */
+  tracking?: {
+    active: boolean;
+    storeLat: number | null;
+    storeLng: number | null;
+    deliveryLat: number | null;
+    deliveryLng: number | null;
+    riderLat: number | null;
+    riderLng: number | null;
+  } | null;
 }
 
 // Delivery Registration

@@ -44,3 +44,7 @@ next-env.d.ts
 scripts/offline-maps/data/
 scripts/offline-maps/output/*.mbtiles
 *.osm.pbf
+
+# Cursor/ECC: nao versionar segredos e estado local (mcp.json.example fica versionado)
+.cursor/mcp.json
+.cursor/ecc-install-state.json
