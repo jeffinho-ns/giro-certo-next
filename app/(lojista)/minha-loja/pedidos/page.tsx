@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { CheckCircle2, XCircle, Clock, Package, MapPin, Phone } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const money = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n || 0);
@@ -64,10 +65,11 @@ export default function PedidosPage() {
   const [tab, setTab] = useState<TabKey>('novos');
   const [detailId, setDetailId] = useState<string | null>(null);
 
+  // Poll mais rápido na aba de pagos (Novos) para o lojista reagir a tempo.
   const { data, isLoading } = useQuery<{ orders: StoreOrder[] }>({
     queryKey: ['store', 'orders'],
     queryFn: () => apiClient.get('/api/store/manage/orders?limit=100'),
-    refetchInterval: 30000,
+    refetchInterval: tab === 'novos' ? 15000 : 30000,
   });
   const orders = useMemo(() => data?.orders ?? [], [data]);
 
@@ -91,8 +93,14 @@ export default function PedidosPage() {
 
   const rejectOrder = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason?: string }) =>
-      apiClient.post(`/api/store/manage/orders/${id}/reject`, { reason }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['store', 'orders'] }),
+      apiClient.post<{ order: StoreOrder; message?: string }>(
+        `/api/store/manage/orders/${id}/reject`,
+        { reason }
+      ),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['store', 'orders'] });
+      if (res?.message) alert(res.message);
+    },
     onError: (e: any) => alert(e?.message || 'Erro ao recusar pedido'),
   });
 
@@ -107,7 +115,16 @@ export default function PedidosPage() {
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
         <TabsList>
-          <TabsTrigger value="novos">Novos ({counts.novos})</TabsTrigger>
+          <TabsTrigger value="novos" className="gap-1.5">
+            Novos
+            {counts.novos > 0 ? (
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-bold text-primary-foreground animate-pulse">
+                {counts.novos}
+              </span>
+            ) : (
+              <span className="text-muted-foreground">(0)</span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="andamento">Em andamento ({counts.andamento})</TabsTrigger>
           <TabsTrigger value="aguardando">Aguardando pgto ({counts.aguardando})</TabsTrigger>
           <TabsTrigger value="historico">Histórico ({counts.historico})</TabsTrigger>
@@ -124,64 +141,79 @@ export default function PedidosPage() {
       )}
 
       <div className="space-y-3">
-        {visible.map((o) => (
-          <Card key={o.id}>
-            <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="min-w-0 space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold">#{o.id.slice(-8)}</span>
-                  {statusBadge(o.status)}
+        {visible.map((o) => {
+          const isPaid = o.status === StoreOrderStatus.paid;
+          return (
+            <Card
+              key={o.id}
+              className={cn(
+                isPaid && 'border-primary/50 bg-primary/5 shadow-sm ring-1 ring-primary/20'
+              )}
+            >
+              <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">#{o.id.slice(-8)}</span>
+                    {statusBadge(o.status)}
+                    {isPaid && (
+                      <Badge variant="outline" className="border-primary/40 text-primary">
+                        Aguardando aceite
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Package className="h-3.5 w-3.5" /> {o.customerName}
+                    <span className="mx-1">•</span>
+                    <Phone className="h-3.5 w-3.5" /> {o.customerPhone}
+                  </p>
+                  <p className="flex items-center gap-1 truncate text-sm text-muted-foreground">
+                    <MapPin className="h-3.5 w-3.5" /> {o.customerAddress}
+                  </p>
+                  <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3" />
+                    {new Date(o.createdAt).toLocaleString('pt-BR')}
+                  </p>
                 </div>
-                <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Package className="h-3.5 w-3.5" /> {o.customerName}
-                  <span className="mx-1">•</span>
-                  <Phone className="h-3.5 w-3.5" /> {o.customerPhone}
-                </p>
-                <p className="flex items-center gap-1 truncate text-sm text-muted-foreground">
-                  <MapPin className="h-3.5 w-3.5" /> {o.customerAddress}
-                </p>
-                <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Clock className="h-3 w-3" />
-                  {new Date(o.createdAt).toLocaleString('pt-BR')}
-                </p>
-              </div>
 
-              <div className="flex flex-col items-end gap-2">
-                <span className="text-lg font-bold">{money(o.total)}</span>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => setDetailId(o.id)}>
-                    Detalhes
-                  </Button>
-                  {o.status === StoreOrderStatus.paid && (
-                    <Button
-                      size="sm"
-                      onClick={() => acceptOrder.mutate(o.id)}
-                      disabled={acceptOrder.isPending}
-                    >
-                      <CheckCircle2 className="mr-1 h-4 w-4" /> Aceitar
+                <div className="flex flex-col items-end gap-2">
+                  <span className="text-lg font-bold">{money(o.total)}</span>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => setDetailId(o.id)}>
+                      Detalhes
                     </Button>
-                  )}
-                  {(o.status === StoreOrderStatus.paid ||
-                    o.status === StoreOrderStatus.awaiting_payment) && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-red-600 hover:text-red-700"
-                      onClick={() => {
-                        const reason = prompt('Motivo da recusa (opcional):') ?? undefined;
-                        if (confirm('Confirmar recusa deste pedido?')) {
-                          rejectOrder.mutate({ id: o.id, reason });
-                        }
-                      }}
-                    >
-                      <XCircle className="mr-1 h-4 w-4" /> Recusar
-                    </Button>
-                  )}
+                    {isPaid && (
+                      <Button
+                        size="sm"
+                        onClick={() => acceptOrder.mutate(o.id)}
+                        disabled={acceptOrder.isPending}
+                      >
+                        <CheckCircle2 className="mr-1 h-4 w-4" /> Aceitar
+                      </Button>
+                    )}
+                    {(isPaid || o.status === StoreOrderStatus.awaiting_payment) && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-red-600 hover:text-red-700"
+                        onClick={() => {
+                          const reason = prompt('Motivo da recusa (opcional):') ?? undefined;
+                          const paidWarning = isPaid
+                            ? '\n\nAtenção: o pagamento já foi recebido. O estorno deve ser feito manualmente no painel do Asaas.'
+                            : '';
+                          if (confirm(`Confirmar recusa deste pedido?${paidWarning}`)) {
+                            rejectOrder.mutate({ id: o.id, reason });
+                          }
+                        }}
+                      >
+                        <XCircle className="mr-1 h-4 w-4" /> Recusar
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {detailId && <OrderDetailDialog id={detailId} onClose={() => setDetailId(null)} />}

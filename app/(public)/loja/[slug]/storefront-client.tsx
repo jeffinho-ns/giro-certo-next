@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
@@ -8,8 +8,10 @@ import {
   CouponPreview,
   CreatedStoreOrder,
   PublicCatalogProduct,
+  PublicOrderStatus,
   PublicStorefront,
   StoreCheckoutResult,
+  StoreOrderStatus,
 } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -133,6 +135,12 @@ export function StorefrontClient({
           {store.description && (
             <p className="mt-3 text-sm text-muted-foreground">{store.description}</p>
           )}
+          {!store.isOpen && (
+            <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100">
+              Esta loja está fechada no momento. Você pode ver o cardápio, mas não é possível
+              fazer pedidos agora.
+            </div>
+          )}
         </div>
       </header>
 
@@ -246,9 +254,19 @@ export function StorefrontClient({
             <div className="text-sm">
               <span className="font-semibold">{itemCount}</span> item(s) •{' '}
               <span className="font-semibold">{money(subtotal)}</span>
-              <span className="block text-xs text-muted-foreground">+ taxa de entrega no checkout</span>
+              {store.isOpen ? (
+                <span className="block text-xs text-muted-foreground">+ taxa de entrega no checkout</span>
+              ) : (
+                <span className="block text-xs text-amber-700 dark:text-amber-400">
+                  Loja fechada — pedidos indisponíveis
+                </span>
+              )}
             </div>
-            <Button onClick={() => setCheckoutOpen(true)} style={{ backgroundColor: theme }}>
+            <Button
+              onClick={() => store.isOpen && setCheckoutOpen(true)}
+              disabled={!store.isOpen}
+              style={store.isOpen ? { backgroundColor: theme } : undefined}
+            >
               <ShoppingBag className="mr-2 h-4 w-4" /> Ver carrinho
             </Button>
           </div>
@@ -266,7 +284,7 @@ export function StorefrontClient({
         />
       )}
 
-      {checkoutOpen && (
+      {checkoutOpen && store.isOpen && (
         <CheckoutDialog
           slug={slug}
           cart={cart}
@@ -460,9 +478,36 @@ function CheckoutDialog({
   const [coupon, setCoupon] = useState<CouponPreview | null>(null);
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
 
   const discount = coupon?.discount ?? 0;
   const totalWithDiscount = Math.max(0, subtotal - discount);
+
+  // Poll do status após gerar o PIX — a página de acompanhamento também faz poll.
+  useEffect(() => {
+    if (step !== 'payment' || !order?.trackingToken || paymentConfirmed) return;
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const res = await apiClient.get<{ order: PublicOrderStatus }>(
+          `/api/store/public/orders/${order.trackingToken}`
+        );
+        if (cancelled) return;
+        const status = res.order?.status;
+        if (status && status !== StoreOrderStatus.awaiting_payment) {
+          setPaymentConfirmed(true);
+        }
+      } catch {
+        // silencioso: o usuário ainda pode ir para /pedido/[token]
+      }
+    };
+    poll();
+    const id = setInterval(poll, 5000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [step, order?.trackingToken, paymentConfirmed]);
 
   const applyCoupon = async () => {
     setCouponError('');
@@ -749,13 +794,25 @@ function CheckoutDialog({
             )}
 
             {order && (
-              <Button
-                variant="secondary"
-                className="w-full"
-                onClick={() => router.push(`/pedido/${order.trackingToken}`)}
-              >
-                Acompanhar meu pedido
-              </Button>
+              <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
+                {paymentConfirmed ? (
+                  <p className="text-center text-sm font-medium text-green-700 dark:text-green-400">
+                    Pagamento confirmado! Acompanhe o andamento do seu pedido.
+                  </p>
+                ) : (
+                  <p className="text-center text-sm text-muted-foreground">
+                    Após o pagamento, esta tela e a página de acompanhamento serão atualizadas
+                    automaticamente.
+                  </p>
+                )}
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={() => router.push(`/pedido/${order.trackingToken}`)}
+                >
+                  Acompanhar pedido
+                </Button>
+              </div>
             )}
           </div>
         )}

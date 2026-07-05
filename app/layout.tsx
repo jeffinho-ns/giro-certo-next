@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Giro Certo Admin - Painel Administrativo",
-  description: "Painel administrativo para gerenciamento do ecossistema Giro Certo",
+  title: "Giro Certo",
+  description: "Peça online com entrega rápida. Giro Certo.",
 };
 
 export default function RootLayout({
