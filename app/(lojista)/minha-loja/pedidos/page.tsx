@@ -16,7 +16,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { CheckCircle2, XCircle, Clock, Package, MapPin, Phone } from 'lucide-react';
+import {
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Package,
+  MapPin,
+  Phone,
+  KeyRound,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthenticatedSse } from '@/hooks/use-sse-stream';
 
@@ -307,6 +315,26 @@ function OrderDetailDialog({ id, onClose }: { id: string; onClose: () => void })
                 <span>{money(order.total)}</span>
               </div>
             </div>
+
+            {order.deliveryOrderId && order.pickupCode ? (
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-primary">
+                  <KeyRound className="h-4 w-4" />
+                  Código de retirada para o motoboy
+                </div>
+                <p className="font-mono text-3xl font-bold tracking-[0.35em] text-foreground">
+                  {order.pickupCode}
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Informe este código ao entregador quando ele chegar na loja. Ele digita no app
+                  para confirmar a retirada do pedido.
+                </p>
+              </div>
+            ) : order.status === StoreOrderStatus.paid ? (
+              <p className="rounded-lg border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+                Aceite o pedido para gerar o código de retirada e chamar os motoboys.
+              </p>
+            ) : null}
           </div>
         )}
 

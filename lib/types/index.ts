@@ -497,6 +497,8 @@ export interface StoreOrder {
   status: StoreOrderStatus;
   trackingToken: string;
   deliveryOrderId: string | null;
+  /** Código de 4 dígitos para retirada no app (após aceite/despacho). */
+  pickupCode?: string | null;
   invoiceUrl: string | null;
   createdAt: string;
   paidAt: string | null;
