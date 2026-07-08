@@ -262,6 +262,13 @@ export interface Partner {
   linked_users?: Array<{ id: string; name: string; email: string | null }>;
   /** self (padrão) | giro_managed — vitrine gerenciada pela equipe Giro Certo */
   storeManagementMode?: StoreManagementMode | null;
+  storeDeliveryFeeMode?: 'fixed' | 'distance_capped' | 'distance' | null;
+  storeDeliveryFeeMax?: number | null;
+  storeDeliveryFeeFixed?: number | null;
+  /** snake_case vindo direto do PostgreSQL */
+  store_delivery_fee_mode?: string | null;
+  store_delivery_fee_max?: number | null;
+  store_delivery_fee_fixed?: number | null;
 }
 
 export interface PartnerPayment {
@@ -531,6 +538,12 @@ export interface PublicStore {
   rating: number;
   reviewCount: number;
   isOpen: boolean;
+  deliveryFeePolicy?: {
+    mode: 'fixed' | 'distance_capped' | 'distance';
+    fixedFee: number | null;
+    maxFee: number | null;
+    label: string;
+  };
 }
 
 export interface PublicOption {

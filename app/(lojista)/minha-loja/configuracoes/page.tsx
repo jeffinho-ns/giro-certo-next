@@ -10,6 +10,31 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+type DeliveryFeeMode = 'fixed' | 'distance_capped' | 'distance';
+
+function readPartnerFeeMode(partner: Partner): DeliveryFeeMode {
+  const raw = partner.storeDeliveryFeeMode ?? partner.store_delivery_fee_mode ?? 'distance_capped';
+  if (raw === 'fixed' || raw === 'distance' || raw === 'distance_capped') return raw;
+  return 'distance_capped';
+}
+
+function readPartnerFeeMax(partner: Partner): string {
+  const v = partner.storeDeliveryFeeMax ?? partner.store_delivery_fee_max;
+  return v != null ? String(v) : '';
+}
+
+function readPartnerFeeFixed(partner: Partner): string {
+  const v = partner.storeDeliveryFeeFixed ?? partner.store_delivery_fee_fixed;
+  return v != null ? String(v) : '';
+}
 
 type DayKey =
   | 'monday'
@@ -156,6 +181,9 @@ export default function ConfiguracoesPage() {
   const [phone, setPhone] = useState('');
   const [avgPreparationTime, setAvgPreparationTime] = useState('');
   const [maxServiceRadius, setMaxServiceRadius] = useState('');
+  const [feeMode, setFeeMode] = useState<DeliveryFeeMode>('distance_capped');
+  const [feeMax, setFeeMax] = useState('');
+  const [feeFixed, setFeeFixed] = useState('');
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
@@ -170,6 +198,9 @@ export default function ConfiguracoesPage() {
     setMaxServiceRadius(
       partner.maxServiceRadius != null ? String(partner.maxServiceRadius) : ''
     );
+    setFeeMode(readPartnerFeeMode(partner));
+    setFeeMax(readPartnerFeeMax(partner));
+    setFeeFixed(readPartnerFeeFixed(partner));
   }, [data]);
 
   const isOpenNow = useMemo(() => {
@@ -200,8 +231,12 @@ export default function ConfiguracoesPage() {
         phone?: string;
         avgPreparationTime?: number;
         maxServiceRadius?: number;
+        storeDeliveryFeeMode?: DeliveryFeeMode;
+        storeDeliveryFeeMax?: number | null;
+        storeDeliveryFeeFixed?: number | null;
       } = {
         operatingHours: toPayload(hours),
+        storeDeliveryFeeMode: feeMode,
       };
 
       if (phone.trim()) payload.phone = phone.trim();
@@ -220,6 +255,34 @@ export default function ConfiguracoesPage() {
           throw new Error('Raio de atendimento inválido');
         }
         payload.maxServiceRadius = n;
+      }
+
+      if (feeMode === 'fixed') {
+        const fixed = feeFixed.trim() ? Number(feeFixed.replace(',', '.')) : NaN;
+        if (!Number.isFinite(fixed) || fixed < 0) {
+          throw new Error('Informe o valor fixo do frete (R$)');
+        }
+        payload.storeDeliveryFeeFixed = Math.round(fixed * 100) / 100;
+        if (feeMax.trim()) {
+          const max = Number(feeMax.replace(',', '.'));
+          if (!Number.isFinite(max) || max < 0) throw new Error('Teto máximo de frete inválido');
+          if (fixed > max) throw new Error('O frete fixo não pode ser maior que o teto');
+          payload.storeDeliveryFeeMax = Math.round(max * 100) / 100;
+        } else {
+          payload.storeDeliveryFeeMax = null;
+        }
+      } else if (feeMode === 'distance_capped') {
+        const max = feeMax.trim() ? Number(feeMax.replace(',', '.')) : NaN;
+        if (!Number.isFinite(max) || max <= 0) {
+          throw new Error('Informe o valor máximo do frete (ex.: 9,00)');
+        }
+        payload.storeDeliveryFeeMax = Math.round(max * 100) / 100;
+        payload.storeDeliveryFeeFixed = null;
+      } else {
+        payload.storeDeliveryFeeMax = feeMax.trim()
+          ? Math.round(Number(feeMax.replace(',', '.')) * 100) / 100
+          : null;
+        payload.storeDeliveryFeeFixed = null;
       }
 
       if (isAdminMode && actAsPartnerId) {
@@ -351,6 +414,77 @@ export default function ConfiguracoesPage() {
               />
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Frete da loja virtual</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Define quanto o cliente paga de entrega e o que o motoboy recebe por corrida saindo da
+            sua loja. O valor aparece na vitrine antes do pagamento.
+          </p>
+          <div className="space-y-2">
+            <Label>Como calcular o frete</Label>
+            <Select value={feeMode} onValueChange={(v) => setFeeMode(v as DeliveryFeeMode)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="fixed">Valor fixo (sempre o mesmo)</SelectItem>
+                <SelectItem value="distance_capped">
+                  Por distância, com teto máximo (recomendado)
+                </SelectItem>
+                <SelectItem value="distance">Por distância, sem teto (automático)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {feeMode === 'fixed' && (
+            <div className="space-y-2">
+              <Label htmlFor="feeFixed">Valor fixo do frete (R$)</Label>
+              <Input
+                id="feeFixed"
+                type="number"
+                min={0}
+                step="0.01"
+                value={feeFixed}
+                onChange={(e) => setFeeFixed(e.target.value)}
+                placeholder="9,00"
+              />
+            </div>
+          )}
+          {(feeMode === 'distance_capped' || feeMode === 'fixed') && (
+            <div className="space-y-2">
+              <Label htmlFor="feeMax">
+                {feeMode === 'distance_capped'
+                  ? 'Valor máximo do frete (R$) *'
+                  : 'Teto máximo opcional (R$)'}
+              </Label>
+              <Input
+                id="feeMax"
+                type="number"
+                min={0}
+                step="0.01"
+                value={feeMax}
+                onChange={(e) => setFeeMax(e.target.value)}
+                placeholder={feeMode === 'distance_capped' ? '9,00' : 'Opcional'}
+              />
+              {feeMode === 'distance_capped' && (
+                <p className="text-xs text-muted-foreground">
+                  Ex.: com teto de R$ 9,00, corridas longas cobram no máximo R$ 9,00 do cliente. O
+                  motoboy sabe que sua loja paga até esse valor.
+                </p>
+              )}
+            </div>
+          )}
+          {feeMode === 'distance' && (
+            <p className="text-xs text-muted-foreground">
+              O frete é calculado automaticamente pela distância (rota + km). Sem limite — use se
+              quiser repassar o valor integral ao motoboy.
+            </p>
+          )}
         </CardContent>
       </Card>
 

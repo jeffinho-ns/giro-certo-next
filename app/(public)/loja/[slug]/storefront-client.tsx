@@ -139,8 +139,13 @@ export function StorefrontClient({
               </div>
             </div>
           </div>
-          {store.description && (
+              {store.description && (
             <p className="mt-3 text-sm text-muted-foreground">{store.description}</p>
+          )}
+          {store.deliveryFeePolicy?.label && (
+            <p className="mt-2 text-sm text-muted-foreground">
+              🛵 {store.deliveryFeePolicy.label}
+            </p>
           )}
           {!store.isOpen && (
             <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100">
@@ -306,6 +311,7 @@ export function StorefrontClient({
           slug={slug}
           cart={cart}
           subtotal={subtotal}
+          deliveryFeePolicy={store.deliveryFeePolicy}
           onClose={() => setCheckoutOpen(false)}
           onChangeQty={changeQty}
           onRemove={removeLine}
@@ -466,6 +472,7 @@ function CheckoutDialog({
   slug,
   cart,
   subtotal,
+  deliveryFeePolicy,
   onClose,
   onChangeQty,
   onRemove,
@@ -473,6 +480,7 @@ function CheckoutDialog({
   slug: string;
   cart: CartLine[];
   subtotal: number;
+  deliveryFeePolicy?: PublicStorefront['store']['deliveryFeePolicy'];
   onClose: () => void;
   onChangeQty: (key: string, delta: number) => void;
   onRemove: (key: string) => void;
@@ -496,9 +504,75 @@ function CheckoutDialog({
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [deliveryFee, setDeliveryFee] = useState<number | null>(null);
+  const [deliveryFeeLoading, setDeliveryFeeLoading] = useState(false);
+  const [deliveryFeeNote, setDeliveryFeeNote] = useState<string | null>(null);
 
   const discount = coupon?.discount ?? 0;
   const totalWithDiscount = Math.max(0, subtotal - discount);
+  const estimatedTotal =
+    deliveryFee != null ? Math.max(0, totalWithDiscount + deliveryFee) : totalWithDiscount;
+
+  useEffect(() => {
+    const policy = deliveryFeePolicy;
+    if (!policy) return;
+
+    if (policy.mode === 'fixed' && policy.fixedFee != null) {
+      setDeliveryFee(policy.fixedFee);
+      setDeliveryFeeNote(policy.label);
+      return;
+    }
+
+    if (!coords) {
+      setDeliveryFee(null);
+      setDeliveryFeeNote(
+        policy.mode === 'distance_capped'
+          ? `Informe o endereço para calcular o frete (máx. ${money(policy.maxFee ?? 0)})`
+          : 'Informe o endereço para calcular o frete'
+      );
+      return;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      setDeliveryFeeLoading(true);
+      try {
+        const res = await apiClient.post<{
+          quote: { deliveryFee: number; quotedFee?: number | null; distanceKm?: number | null };
+          policy: { label: string };
+        }>(`/api/store/public/${slug}/delivery-quote`, {
+          deliveryLatitude: coords.lat,
+          deliveryLongitude: coords.lng,
+        });
+        if (cancelled) return;
+        setDeliveryFee(res.quote.deliveryFee);
+        const parts = [res.policy.label];
+        if (
+          res.quote.quotedFee != null &&
+          res.quote.deliveryFee < res.quote.quotedFee
+        ) {
+          parts.push(
+            `(distância ${res.quote.distanceKm?.toFixed(1) ?? '?'} km — teto aplicado)`
+          );
+        } else if (res.quote.distanceKm != null) {
+          parts.push(`(${res.quote.distanceKm.toFixed(1)} km)`);
+        }
+        setDeliveryFeeNote(parts.join(' '));
+      } catch (e: any) {
+        if (!cancelled) {
+          setDeliveryFee(null);
+          setDeliveryFeeNote(e?.message || 'Não foi possível calcular o frete');
+        }
+      } finally {
+        if (!cancelled) setDeliveryFeeLoading(false);
+      }
+    }, 400);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [coords, deliveryFeePolicy, slug]);
 
   usePublicStoreOrderSse(
     order?.trackingToken ?? '',
@@ -732,8 +806,24 @@ function CheckoutDialog({
                 <span>Total parcial</span>
                 <span>{money(totalWithDiscount)}</span>
               </div>
+              {deliveryFeePolicy?.mode === 'fixed' && deliveryFee != null && (
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Frete</span>
+                  <span>{money(deliveryFee)}</span>
+                </div>
+              )}
+              {deliveryFeePolicy?.mode === 'fixed' && deliveryFee != null && (
+                <div className="flex justify-between font-semibold">
+                  <span>Total estimado</span>
+                  <span>{money(estimatedTotal)}</span>
+                </div>
+              )}
             </div>
-            <p className="text-xs text-muted-foreground">A taxa de entrega é calculada no próximo passo.</p>
+            <p className="text-xs text-muted-foreground">
+              {deliveryFeePolicy?.mode === 'fixed'
+                ? deliveryFeePolicy.label
+                : 'A taxa de entrega é calculada no próximo passo com seu endereço.'}
+            </p>
           </div>
         )}
 
@@ -766,6 +856,27 @@ function CheckoutDialog({
               <MapPin className="mr-2 h-4 w-4" />
               {coords ? 'Localização capturada ✓' : geoLoading ? 'Obtendo...' : 'Usar minha localização (melhora a taxa)'}
             </Button>
+            <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Frete estimado</span>
+                <span className="font-semibold">
+                  {deliveryFeeLoading
+                    ? 'Calculando...'
+                    : deliveryFee != null
+                      ? money(deliveryFee)
+                      : '—'}
+                </span>
+              </div>
+              {deliveryFeeNote && (
+                <p className="mt-1 text-xs text-muted-foreground">{deliveryFeeNote}</p>
+              )}
+              {deliveryFee != null && (
+                <div className="mt-2 flex justify-between border-t border-border pt-2 font-semibold">
+                  <span>Total com frete</span>
+                  <span>{money(estimatedTotal)}</span>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
