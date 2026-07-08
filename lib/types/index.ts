@@ -148,6 +148,10 @@ export interface StoreAdminStats {
   ordersPending: number;
   productsActive: number;
   revenueToday: number;
+  ordersLast7Days?: number;
+  revenueLast7Days?: number;
+  avgRating?: number | null;
+  reviewCount?: number;
 }
 
 export interface StoreAuditLogEntry {
