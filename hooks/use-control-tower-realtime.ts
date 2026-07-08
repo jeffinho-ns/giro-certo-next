@@ -6,7 +6,7 @@ import { io, type Socket } from 'socket.io-client';
 import { apiClient } from '@/lib/api';
 
 /** Agrega atualizações de posição antes de repintar o mapa (ms). */
-const RIDER_POSITION_FLUSH_MS = 500;
+const RIDER_POSITION_FLUSH_MS = 150;
 
 function socketBaseUrl(): string {
   const base = process.env.NEXT_PUBLIC_API_URL || 'https://giro-certo-api.onrender.com';

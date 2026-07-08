@@ -41,7 +41,7 @@ function buildOrdersQueryParams(filters: {
 }
 
 export default function ControlTowerPage() {
-  const { isAdmin } = useAuth();
+  const { isModerator } = useAuth();
   const queryClient = useQueryClient();
   const [liveRiderPositions, setLiveRiderPositions] = useState<
     Record<string, { lat: number; lng: number }>
@@ -72,15 +72,16 @@ export default function ControlTowerPage() {
   });
 
   const { data: activeRiders } = useQuery<{ riders: ActiveRider[] }>({
-    queryKey: ['active-riders', filters.vehicleType, filters.hasVerifiedBadge],
+    queryKey: ['active-riders', filters.vehicleType, filters.hasVerifiedBadge, 'delivery'],
     queryFn: async () => {
       const params = new URLSearchParams();
+      params.append('deliveryOnly', 'true');
       if (filters.vehicleType) params.append('vehicleType', filters.vehicleType);
       if (filters.hasVerifiedBadge !== undefined)
         params.append('hasVerifiedBadge', String(filters.hasVerifiedBadge));
 
       const queryString = params.toString();
-      const url = `/api/dashboard/active-riders${queryString ? `?${queryString}` : ''}`;
+      const url = `/api/dashboard/active-riders?${queryString}`;
       return apiClient.get<{ riders: ActiveRider[] }>(url);
     },
     staleTime: 12_000,
@@ -104,17 +105,26 @@ export default function ControlTowerPage() {
   });
 
   const trackedOrderIds = useMemo(() => {
-    if (!isAdmin) return [];
+    if (!isModerator) return [];
     return (orders?.orders ?? []).map((o) => o.id).filter(Boolean);
-  }, [isAdmin, orders?.orders]);
+  }, [isModerator, orders?.orders]);
 
   useControlTowerRealtime(queryClient, setLiveRiderPositions, trackedOrderIds);
 
-  useAuthenticatedSse(isAdmin, (event) => {
+  useAuthenticatedSse(isModerator, (event, data) => {
+    if (event === 'rider:location:update' && data && typeof data === 'object') {
+      const d = data as Record<string, unknown>;
+      const userId = d.userId;
+      if (typeof userId !== 'string' || !userId) return;
+      const lat = typeof d.lat === 'number' ? d.lat : parseFloat(String(d.lat ?? ''));
+      const lng = typeof d.lng === 'number' ? d.lng : parseFloat(String(d.lng ?? ''));
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+      setLiveRiderPositions((prev) => ({ ...prev, [userId]: { lat, lng } }));
+      return;
+    }
     if (
       event === 'delivery:status:changed' ||
-      event === 'delivery:update' ||
-      event === 'rider:location:update'
+      event === 'delivery:update'
     ) {
       void queryClient.invalidateQueries({ queryKey: ['active-riders'] });
       void queryClient.invalidateQueries({ queryKey: ['dashboard-orders'] });
@@ -122,14 +132,21 @@ export default function ControlTowerPage() {
     }
   });
 
-  const mergedRiders: ActiveRider[] = useMemo(() => {
+  const deliveryRiders: ActiveRider[] = useMemo(() => {
     const list = activeRiders?.riders ?? [];
+    return list.filter(
+      (r) => Number(r.activeOrders ?? 0) > 0 || r.currentOrder != null
+    );
+  }, [activeRiders?.riders]);
+
+  const mergedRiders: ActiveRider[] = useMemo(() => {
+    const list = deliveryRiders;
     return list.map((r) => {
       const live = liveRiderPositions[r.id];
       if (!live) return r;
       return { ...r, lat: live.lat, lng: live.lng };
     });
-  }, [activeRiders, liveRiderPositions]);
+  }, [deliveryRiders, liveRiderPositions]);
 
   const selectedRider = useMemo(
     () => mergedRiders.find((r) => r.id === selectedRiderId) ?? null,

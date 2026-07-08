@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
 import { Badge } from "@/components/ui/badge";
 import { ShieldCheck } from "lucide-react";
@@ -203,6 +203,60 @@ const ACTIVE_ORDER_FOR_CLIENT_PIN = new Set([
   "inProgress",
 ]);
 
+/** Marcador com transição suave quando a posição GPS atualiza em tempo real. */
+function AnimatedRiderMarker({
+  position,
+  icon,
+  eventHandlers,
+  children,
+}: {
+  position: [number, number];
+  icon: L.DivIcon;
+  eventHandlers?: L.LeafletEventHandlerFnMap;
+  children?: React.ReactNode;
+}) {
+  const markerRef = useRef<L.Marker | null>(null);
+
+  useEffect(() => {
+    const marker = markerRef.current;
+    if (!marker) return;
+    const [lat, lng] = position;
+    const cur = marker.getLatLng();
+    if (Math.abs(cur.lat - lat) < 1e-7 && Math.abs(cur.lng - lng) < 1e-7) return;
+
+    let frame = 0;
+    const startLat = cur.lat;
+    const startLng = cur.lng;
+    const startTime = performance.now();
+    const duration = 900;
+
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - startTime) / duration);
+      const ease = t * (2 - t);
+      marker.setLatLng([
+        startLat + (lat - startLat) * ease,
+        startLng + (lng - startLng) * ease,
+      ]);
+      if (t < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [position[0], position[1]]);
+
+  return (
+    <Marker
+      ref={(ref) => {
+        markerRef.current = ref;
+      }}
+      position={position}
+      icon={icon}
+      eventHandlers={eventHandlers}
+    >
+      {children}
+    </Marker>
+  );
+}
+
 export function ControlTowerMap({
   riders = [],
   orders = [],
@@ -288,7 +342,7 @@ export function ControlTowerMap({
           );
 
           return (
-            <Marker
+            <AnimatedRiderMarker
               key={rider.id}
               position={[rider.lat, rider.lng]}
               icon={icon}
@@ -349,7 +403,7 @@ export function ControlTowerMap({
                   </p>
                 </div>
               </Popup>
-            </Marker>
+            </AnimatedRiderMarker>
           );
         })}
 
