@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api';
+import { useStoreManageApi } from '@/lib/store-manage-api';
 import { StoreBanner } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,15 +20,19 @@ import {
 } from '@/components/ui/dialog';
 import { Plus, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
 import { ImageUploadField } from '@/components/store/image-upload-field';
+import { ManagedStoreBanner } from '@/components/store/managed-store-banner';
+import { useLojistaStore } from '@/lib/contexts/lojista-store-context';
 
 export default function PromocoesPage() {
+  const { readOnly } = useLojistaStore();
   const queryClient = useQueryClient();
+  const storeApi = useStoreManageApi();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<StoreBanner | null>(null);
 
   const { data, isLoading } = useQuery<{ banners: StoreBanner[] }>({
     queryKey: ['store', 'banners'],
-    queryFn: () => apiClient.get('/api/store/manage/banners'),
+    queryFn: () => storeApi.get('/api/store/manage/banners'),
   });
   const banners = data?.banners ?? [];
 
@@ -36,19 +40,20 @@ export default function PromocoesPage() {
 
   const toggleActive = useMutation({
     mutationFn: (b: StoreBanner) =>
-      apiClient.put(`/api/store/manage/banners/${b.id}`, { active: !b.active }),
+      storeApi.put(`/api/store/manage/banners/${b.id}`, { active: !b.active }),
     onSuccess: invalidate,
     onError: (e: any) => alert(e?.message || 'Erro ao atualizar banner'),
   });
 
   const remove = useMutation({
-    mutationFn: (id: string) => apiClient.delete(`/api/store/manage/banners/${id}`),
+    mutationFn: (id: string) => storeApi.delete(`/api/store/manage/banners/${id}`),
     onSuccess: invalidate,
     onError: (e: any) => alert(e?.message || 'Erro ao excluir banner'),
   });
 
   return (
     <div className="space-y-6">
+      {readOnly && <ManagedStoreBanner />}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Promoções</h1>
@@ -57,7 +62,9 @@ export default function PromocoesPage() {
           </p>
         </div>
         <Button
+          disabled={readOnly}
           onClick={() => {
+            if (readOnly) return;
             setEditing(null);
             setDialogOpen(true);
           }}
@@ -98,6 +105,7 @@ export default function PromocoesPage() {
                 </div>
                 {!b.active && <Badge variant="secondary">Inativo</Badge>}
               </div>
+              {!readOnly && (
               <div className="flex flex-wrap gap-2">
                 <Button
                   size="sm"
@@ -131,6 +139,7 @@ export default function PromocoesPage() {
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
+              )}
             </CardContent>
           </Card>
         ))}
@@ -159,6 +168,7 @@ function BannerDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const storeApi = useStoreManageApi();
   const [imageUrl, setImageUrl] = useState(banner?.imageUrl ?? '');
   const [title, setTitle] = useState(banner?.title ?? '');
   const [linkUrl, setLinkUrl] = useState(banner?.linkUrl ?? '');
@@ -180,8 +190,8 @@ function BannerDialog({
         discount: discountNum,
         active,
       };
-      if (banner) return apiClient.put(`/api/store/manage/banners/${banner.id}`, payload);
-      return apiClient.post('/api/store/manage/banners', payload);
+      if (banner) return storeApi.put(`/api/store/manage/banners/${banner.id}`, payload);
+      return storeApi.post('/api/store/manage/banners', payload);
     },
     onSuccess: onSaved,
     onError: (e: any) => setError(e?.message || 'Erro ao salvar banner'),

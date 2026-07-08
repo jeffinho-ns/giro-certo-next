@@ -127,6 +127,43 @@ export interface Post {
   createdAt: string;
 }
 
+/** Quem gerencia catálogo, promoções e aparência da vitrine. */
+export type StoreManagementMode = 'self' | 'giro_managed';
+
+export interface StoreReadinessCheck {
+  key: string;
+  label: string;
+  passed: boolean;
+  hint?: string;
+}
+
+export interface StoreReadiness {
+  ready: boolean;
+  score: number;
+  checks: StoreReadinessCheck[];
+}
+
+export interface StoreAdminStats {
+  ordersToday: number;
+  ordersPending: number;
+  productsActive: number;
+  revenueToday: number;
+}
+
+export interface StoreAuditLogEntry {
+  id: string;
+  action: string;
+  actorName: string | null;
+  createdAt: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface StoreTemplate {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
 export enum PartnerType {
   STORE = 'STORE',
   MECHANIC = 'MECHANIC',
@@ -223,6 +260,8 @@ export interface Partner {
   payout_bank_account_json?: Record<string, unknown> | null;
   /** Utilizadores do app com partnerId = esta loja */
   linked_users?: Array<{ id: string; name: string; email: string | null }>;
+  /** self (padrão) | giro_managed — vitrine gerenciada pela equipe Giro Certo */
+  storeManagementMode?: StoreManagementMode | null;
 }
 
 export interface PartnerPayment {

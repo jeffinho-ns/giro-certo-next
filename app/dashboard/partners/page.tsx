@@ -27,13 +27,15 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProtectedRoute } from '@/components/auth/protected-route';
-import { Building2, MapPin, Phone, Mail, DollarSign, Trash2 } from 'lucide-react';
+import { Building2, MapPin, Phone, Mail, DollarSign, Trash2, Store, Copy, Check, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PartnerDeliveryPayoutPanel } from '@/components/partners/partner-delivery-payout-panel';
 import {
   isPayoutProfileComplete,
   PayoutProfileJson,
 } from '@/lib/partner-delivery-payout';
+import { StoreManagementMode } from '@/lib/types';
 
 export default function PartnersPage() {
   const { isAdmin } = useAuth();
@@ -147,6 +149,15 @@ export default function PartnersPage() {
       partner.cnpj?.includes(searchTerm);
     return matchesSearch;
   });
+
+  const getStoreManagementBadge = (partner: Partner) => {
+    if (partner.type !== PartnerType.STORE) return null;
+    const mode = partner.storeManagementMode ?? 'self';
+    if (mode === 'giro_managed') {
+      return <Badge className="bg-violet-600">Vitrine Giro</Badge>;
+    }
+    return <Badge variant="outline">Lojista gerencia</Badge>;
+  };
 
   const getStatusBadge = (partner: Partner) => {
     if (partner.isBlocked) {
@@ -296,6 +307,7 @@ export default function PartnersPage() {
                       </CardDescription>
                     </div>
                     {getStatusBadge(partner)}
+                    {getStoreManagementBadge(partner)}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -365,6 +377,14 @@ export default function PartnersPage() {
                     >
                       Ver Detalhes
                     </Button>
+                    {partner.type === PartnerType.STORE && (
+                      <Button variant="default" size="sm" asChild>
+                        <Link href={`/dashboard/lojas/${partner.id}`}>
+                          <Store className="mr-1 h-3.5 w-3.5" />
+                          Gerenciar vitrine
+                        </Link>
+                      </Button>
+                    )}
                     {isAdmin && (
                       <>
                         <Button
@@ -412,6 +432,9 @@ export default function PartnersPage() {
 
                 <TabsContent value="info" className="space-y-4">
                   <PartnerInfoTab partner={partnerDetail.partner} />
+                  {partnerDetail.partner.type === PartnerType.STORE && (
+                    <PartnerStorefrontPanel partner={partnerDetail.partner} />
+                  )}
                 </TabsContent>
 
                 <TabsContent value="financial" className="space-y-4">
@@ -431,6 +454,14 @@ export default function PartnersPage() {
               </Tabs>
 
               <DialogFooter>
+                {isAdmin && partnerDetail.partner.type === PartnerType.STORE && (
+                  <Button asChild>
+                    <Link href={`/dashboard/lojas/${partnerDetail.partner.id}`}>
+                      <Store className="mr-2 h-4 w-4" />
+                      Gerenciar vitrine
+                    </Link>
+                  </Button>
+                )}
                 {isAdmin && (
                   <>
                     <Button
@@ -516,6 +547,7 @@ function EditPartnerDialog({
     avgPreparationTime: partner?.avgPreparationTime?.toString() || '',
     password: '',
     confirmPassword: '',
+    storeManagementMode: (partner?.storeManagementMode ?? 'self') as StoreManagementMode,
   });
   const [passwordError, setPasswordError] = useState('');
 
@@ -545,6 +577,8 @@ function EditPartnerDialog({
         : null,
       password: isCreateMode ? formData.password || undefined : undefined,
       confirmPassword: undefined,
+      storeManagementMode:
+        formData.type === PartnerType.STORE ? formData.storeManagementMode : undefined,
     });
   };
 
@@ -702,6 +736,32 @@ function EditPartnerDialog({
           />
         </div>
 
+        {formData.type === PartnerType.STORE && (
+          <div className="space-y-2">
+            <Label>Gestão da vitrine</Label>
+            <Select
+              value={formData.storeManagementMode}
+              onValueChange={(value) =>
+                setFormData({
+                  ...formData,
+                  storeManagementMode: value as StoreManagementMode,
+                })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="self">Lojista gerencia (self)</SelectItem>
+                <SelectItem value="giro_managed">Giro Certo gerencia (giro_managed)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Em modo giro_managed, o lojista vê a vitrine em somente leitura.
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Raio Máximo (km)</Label>
@@ -732,9 +792,66 @@ function EditPartnerDialog({
   );
 }
 
+function PartnerStorefrontPanel({ partner }: { partner: Partner }) {
+  const [copied, setCopied] = useState(false);
+  const storefrontPath = partner.slug ? `/loja/${partner.slug}` : null;
+
+  const copyUrl = async () => {
+    if (!storefrontPath || typeof window === 'undefined') return;
+    const full = `${window.location.origin}${storefrontPath}`;
+    await navigator.clipboard.writeText(full);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="rounded-lg border border-border p-4 space-y-3">
+      <Label className="text-muted-foreground">Vitrine pública</Label>
+      {storefrontPath ? (
+        <>
+          <p className="font-mono text-sm break-all">{storefrontPath}</p>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={copyUrl}>
+              {copied ? (
+                <Check className="mr-2 h-4 w-4 text-green-600" />
+              ) : (
+                <Copy className="mr-2 h-4 w-4" />
+              )}
+              {copied ? 'Copiado!' : 'Copiar link'}
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <a href={storefrontPath} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Abrir vitrine
+              </a>
+            </Button>
+          </div>
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Slug da vitrine não configurado. Defina em Gerenciar vitrine → Personalizar.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function PartnerInfoTab({ partner }: { partner: Partner }) {
   return (
     <div className="space-y-4">
+      {partner.type === PartnerType.STORE && (
+        <div>
+          <Label className="text-muted-foreground">Gestão da vitrine</Label>
+          <div className="mt-1">
+            {partner.storeManagementMode === 'giro_managed' ? (
+              <Badge className="bg-violet-600">Giro Certo gerencia</Badge>
+            ) : (
+              <Badge variant="outline">Lojista gerencia</Badge>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label className="text-muted-foreground">Nome</Label>

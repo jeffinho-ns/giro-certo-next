@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
+import { useStoreManage } from '@/lib/store-manage-context';
 import { Partner } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -140,9 +141,15 @@ function computeIsOpen(isBlocked: boolean, operatingHours: unknown): boolean {
 
 export default function ConfiguracoesPage() {
   const queryClient = useQueryClient();
+  const { isAdminMode, actAsPartnerId } = useStoreManage();
   const { data, isLoading } = useQuery<{ partner: Partner }>({
-    queryKey: ['minha-loja', 'partner'],
-    queryFn: () => apiClient.get<{ partner: Partner }>('/api/partners/me'),
+    queryKey: ['minha-loja', 'partner', actAsPartnerId],
+    queryFn: () => {
+      if (isAdminMode && actAsPartnerId) {
+        return apiClient.get<{ partner: Partner }>(`/api/partners/${actAsPartnerId}`);
+      }
+      return apiClient.get<{ partner: Partner }>('/api/partners/me');
+    },
   });
 
   const [hours, setHours] = useState<Record<DayKey, DayHours>>(defaultWeek);
@@ -215,10 +222,13 @@ export default function ConfiguracoesPage() {
         payload.maxServiceRadius = n;
       }
 
+      if (isAdminMode && actAsPartnerId) {
+        return apiClient.put<{ partner: Partner }>(`/api/partners/${actAsPartnerId}`, payload);
+      }
       return apiClient.put<{ partner: Partner }>('/api/partners/me', payload);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['minha-loja', 'partner'] });
+      queryClient.invalidateQueries({ queryKey: ['minha-loja', 'partner', actAsPartnerId] });
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     },

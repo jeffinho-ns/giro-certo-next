@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api';
+import { useStoreManageApi } from '@/lib/store-manage-api';
 import { StoreAppearance } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,14 +10,18 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ImageUploadField } from '@/components/store/image-upload-field';
+import { ManagedStoreBanner } from '@/components/store/managed-store-banner';
+import { useLojistaStore } from '@/lib/contexts/lojista-store-context';
 
 const PRESET_COLORS = ['#FF6B00', '#E11D48', '#16A34A', '#2563EB', '#7C3AED', '#0891B2', '#CA8A04'];
 
 export default function PersonalizarPage() {
+  const { readOnly } = useLojistaStore();
   const queryClient = useQueryClient();
+  const storeApi = useStoreManageApi();
   const { data, isLoading } = useQuery<{ appearance: StoreAppearance }>({
     queryKey: ['store', 'appearance'],
-    queryFn: () => apiClient.get('/api/store/manage/appearance'),
+    queryFn: () => storeApi.get('/api/store/manage/appearance'),
   });
 
   const [tradingName, setTradingName] = useState('');
@@ -45,7 +49,7 @@ export default function PersonalizarPage() {
       if (themeColor && !/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(themeColor)) {
         throw new Error('Cor inválida (use hex, ex.: #FF6B00)');
       }
-      return apiClient.put('/api/store/manage/appearance', {
+      return storeApi.put('/api/store/manage/appearance', {
         tradingName: tradingName.trim() || null,
         description: description.trim() || null,
         photoUrl: photoUrl.trim() || null,
@@ -68,6 +72,7 @@ export default function PersonalizarPage() {
 
   return (
     <div className="max-w-3xl space-y-6">
+      {readOnly && <ManagedStoreBanner />}
       <div>
         <h1 className="text-2xl font-bold">Personalizar loja</h1>
         <p className="text-sm text-muted-foreground">
@@ -118,7 +123,7 @@ export default function PersonalizarPage() {
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="space-y-2">
             <Label>Nome de exibição (fantasia)</Label>
-            <Input value={tradingName} onChange={(e) => setTradingName(e.target.value)} placeholder="Ex.: Burguer do Zé" />
+            <Input value={tradingName} onChange={(e) => setTradingName(e.target.value)} placeholder="Ex.: Burguer do Zé" disabled={readOnly} />
           </div>
           <div className="space-y-2">
             <Label>Descrição curta</Label>
@@ -126,6 +131,7 @@ export default function PersonalizarPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Ex.: Os melhores lanches artesanais da cidade"
+              disabled={readOnly}
             />
           </div>
           <ImageUploadField
@@ -134,6 +140,7 @@ export default function PersonalizarPage() {
             onChange={setPhotoUrl}
             aspect="square"
             entityId={data?.appearance?.id}
+            disabled={readOnly}
           />
           <ImageUploadField
             label="Capa da loja"
@@ -141,6 +148,7 @@ export default function PersonalizarPage() {
             onChange={setCoverUrl}
             aspect="wide"
             entityId={data?.appearance?.id}
+            disabled={readOnly}
           />
           <div className="space-y-2">
             <Label>Cor de destaque</Label>
@@ -149,6 +157,7 @@ export default function PersonalizarPage() {
                 <button
                   key={c}
                   type="button"
+                  disabled={readOnly}
                   onClick={() => setThemeColor(c)}
                   className={`h-8 w-8 rounded-full border-2 ${
                     themeColor.toLowerCase() === c.toLowerCase() ? 'border-foreground' : 'border-transparent'
@@ -162,18 +171,21 @@ export default function PersonalizarPage() {
                 onChange={(e) => setThemeColor(e.target.value)}
                 placeholder="#FF6B00"
                 className="w-28"
+                disabled={readOnly}
               />
             </div>
           </div>
         </CardContent>
       </Card>
 
+      {!readOnly && (
       <div className="flex items-center gap-3">
         <Button onClick={() => save.mutate()} disabled={save.isPending}>
           {save.isPending ? 'Salvando...' : 'Salvar alterações'}
         </Button>
         {saved && <span className="text-sm text-green-600">Salvo!</span>}
       </div>
+      )}
     </div>
   );
 }

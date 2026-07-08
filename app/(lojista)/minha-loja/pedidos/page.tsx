@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api';
+import { useStoreManageApi } from '@/lib/store-manage-api';
 import { StoreOrder, StoreOrderStatus } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -63,13 +63,14 @@ const TAB_FILTER: Record<TabKey, StoreOrderStatus[]> = {
 
 export default function PedidosPage() {
   const queryClient = useQueryClient();
+  const storeApi = useStoreManageApi();
   const [tab, setTab] = useState<TabKey>('novos');
   const [detailId, setDetailId] = useState<string | null>(null);
 
   // SSE em tempo real; poll lento como fallback.
   const { data, isLoading } = useQuery<{ orders: StoreOrder[] }>({
     queryKey: ['store', 'orders'],
-    queryFn: () => apiClient.get('/api/store/manage/orders?limit=100'),
+    queryFn: () => storeApi.get('/api/store/manage/orders?limit=100'),
     refetchInterval: 120_000,
   });
 
@@ -98,14 +99,14 @@ export default function PedidosPage() {
   const visible = orders.filter((o) => TAB_FILTER[tab].includes(o.status));
 
   const acceptOrder = useMutation({
-    mutationFn: (id: string) => apiClient.post(`/api/store/manage/orders/${id}/accept`),
+    mutationFn: (id: string) => storeApi.post(`/api/store/manage/orders/${id}/accept`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['store', 'orders'] }),
     onError: (e: any) => alert(e?.message || 'Erro ao aceitar pedido'),
   });
 
   const rejectOrder = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason?: string }) =>
-      apiClient.post<{ order: StoreOrder; message?: string }>(
+      storeApi.post<{ order: StoreOrder; message?: string }>(
         `/api/store/manage/orders/${id}/reject`,
         { reason }
       ),
@@ -234,9 +235,10 @@ export default function PedidosPage() {
 }
 
 function OrderDetailDialog({ id, onClose }: { id: string; onClose: () => void }) {
+  const storeApi = useStoreManageApi();
   const { data, isLoading } = useQuery<{ order: StoreOrder }>({
     queryKey: ['store', 'order', id],
-    queryFn: () => apiClient.get(`/api/store/manage/orders/${id}`),
+    queryFn: () => storeApi.get(`/api/store/manage/orders/${id}`),
   });
   const order = data?.order;
 

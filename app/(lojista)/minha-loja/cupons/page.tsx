@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api';
+import { useStoreManageApi } from '@/lib/store-manage-api';
 import { CouponDiscountType, StoreCoupon } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Plus, Pencil, Trash2, Power } from 'lucide-react';
+import { ManagedStoreBanner } from '@/components/store/managed-store-banner';
+import { useLojistaStore } from '@/lib/contexts/lojista-store-context';
 
 const money = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n || 0);
@@ -34,13 +36,15 @@ function describeDiscount(c: StoreCoupon) {
 }
 
 export default function CuponsPage() {
+  const { readOnly } = useLojistaStore();
   const queryClient = useQueryClient();
+  const storeApi = useStoreManageApi();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<StoreCoupon | null>(null);
 
   const { data, isLoading } = useQuery<{ coupons: StoreCoupon[] }>({
     queryKey: ['store', 'coupons'],
-    queryFn: () => apiClient.get('/api/store/manage/coupons'),
+    queryFn: () => storeApi.get('/api/store/manage/coupons'),
   });
   const coupons = data?.coupons ?? [];
 
@@ -48,19 +52,20 @@ export default function CuponsPage() {
 
   const toggle = useMutation({
     mutationFn: (c: StoreCoupon) =>
-      apiClient.put(`/api/store/manage/coupons/${c.id}`, { active: !c.active }),
+      storeApi.put(`/api/store/manage/coupons/${c.id}`, { active: !c.active }),
     onSuccess: invalidate,
     onError: (e: any) => alert(e?.message || 'Erro ao atualizar cupom'),
   });
 
   const remove = useMutation({
-    mutationFn: (id: string) => apiClient.delete(`/api/store/manage/coupons/${id}`),
+    mutationFn: (id: string) => storeApi.delete(`/api/store/manage/coupons/${id}`),
     onSuccess: invalidate,
     onError: (e: any) => alert(e?.message || 'Erro ao excluir cupom'),
   });
 
   return (
     <div className="space-y-6">
+      {readOnly && <ManagedStoreBanner />}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Cupons</h1>
@@ -69,7 +74,9 @@ export default function CuponsPage() {
           </p>
         </div>
         <Button
+          disabled={readOnly}
           onClick={() => {
+            if (readOnly) return;
             setEditing(null);
             setDialogOpen(true);
           }}
@@ -105,6 +112,7 @@ export default function CuponsPage() {
                     : ''}
                 </p>
               </div>
+              {!readOnly && (
               <div className="flex gap-2">
                 <Button
                   size="sm"
@@ -130,6 +138,7 @@ export default function CuponsPage() {
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
+              )}
             </CardContent>
           </Card>
         ))}
@@ -158,6 +167,7 @@ function CouponDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const storeApi = useStoreManageApi();
   const [code, setCode] = useState(coupon?.code ?? '');
   const [discountType, setDiscountType] = useState<CouponDiscountType>(
     coupon?.discountType ?? 'percent'
@@ -190,8 +200,8 @@ function CouponDialog({
         expiresAt: expiresAt ? new Date(expiresAt + 'T23:59:59').toISOString() : null,
         active,
       };
-      if (coupon) return apiClient.put(`/api/store/manage/coupons/${coupon.id}`, payload);
-      return apiClient.post('/api/store/manage/coupons', payload);
+      if (coupon) return storeApi.put(`/api/store/manage/coupons/${coupon.id}`, payload);
+      return storeApi.post('/api/store/manage/coupons', payload);
     },
     onSuccess: onSaved,
     onError: (e: any) => setError(e?.message || 'Erro ao salvar cupom'),

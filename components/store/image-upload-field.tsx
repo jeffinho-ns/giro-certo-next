@@ -15,6 +15,7 @@ interface ImageUploadFieldProps {
   aspect?: 'square' | 'wide';
   /** entityId (pasta) para o upload; normalmente o id da loja. */
   entityId?: string;
+  disabled?: boolean;
 }
 
 export function ImageUploadField({
@@ -23,6 +24,7 @@ export function ImageUploadField({
   onChange,
   aspect = 'wide',
   entityId,
+  disabled = false,
 }: ImageUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -60,8 +62,9 @@ export function ImageUploadField({
             <img src={value} alt="" className="h-full w-full object-cover" />
             <button
               type="button"
+              disabled={disabled}
               onClick={() => onChange('')}
-              className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white hover:bg-black/80"
+              className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white hover:bg-black/80 disabled:pointer-events-none disabled:opacity-50"
               aria-label="Remover imagem"
             >
               <X className="h-3.5 w-3.5" />
@@ -85,6 +88,7 @@ export function ImageUploadField({
           type="file"
           accept="image/*"
           className="hidden"
+          disabled={disabled}
           onChange={(e) => handleFile(e.target.files?.[0])}
         />
         <Button
@@ -92,11 +96,12 @@ export function ImageUploadField({
           variant="outline"
           size="sm"
           onClick={() => inputRef.current?.click()}
-          disabled={uploading}
+          disabled={disabled || uploading}
         >
           <Upload className="mr-2 h-3.5 w-3.5" />
           {value ? 'Trocar imagem' : 'Enviar imagem'}
         </Button>
+        {!disabled && (
         <button
           type="button"
           className="text-xs text-muted-foreground underline"
@@ -104,9 +109,10 @@ export function ImageUploadField({
         >
           ou usar URL
         </button>
+        )}
       </div>
 
-      {showUrl && (
+      {showUrl && !disabled && (
         <Input
           value={value}
           onChange={(e) => onChange(e.target.value)}

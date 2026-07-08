@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api';
+import { useStoreManageApi } from '@/lib/store-manage-api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Star } from 'lucide-react';
 
@@ -33,9 +33,10 @@ function Stars({ value }: { value: number }) {
 }
 
 export default function AvaliacoesPage() {
+  const storeApi = useStoreManageApi();
   const { data, isLoading } = useQuery<ReviewsResponse>({
     queryKey: ['store', 'reviews'],
-    queryFn: () => apiClient.get('/api/store/manage/reviews'),
+    queryFn: () => storeApi.get('/api/store/manage/reviews'),
   });
 
   const reviews = data?.reviews ?? [];

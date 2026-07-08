@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api';
+import { useStoreManageApi } from '@/lib/store-manage-api';
 import { Product, ProductCategory, ProductOptionGroup } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,12 +27,16 @@ import {
 } from '@/components/ui/dialog';
 import { Plus, Pencil, Trash2, Settings2, Tag } from 'lucide-react';
 import { ImageUploadField } from '@/components/store/image-upload-field';
+import { ManagedStoreBanner } from '@/components/store/managed-store-banner';
+import { useLojistaStore } from '@/lib/contexts/lojista-store-context';
 
 const money = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n || 0);
 
 export default function ProdutosPage() {
+  const { readOnly } = useLojistaStore();
   const queryClient = useQueryClient();
+  const storeApi = useStoreManageApi();
   const [newCategory, setNewCategory] = useState('');
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -40,18 +44,18 @@ export default function ProdutosPage() {
 
   const { data: categoriesData } = useQuery<{ categories: ProductCategory[] }>({
     queryKey: ['store', 'categories'],
-    queryFn: () => apiClient.get('/api/store/manage/categories'),
+    queryFn: () => storeApi.get('/api/store/manage/categories'),
   });
   const categories = categoriesData?.categories ?? [];
 
   const { data: productsData, isLoading } = useQuery<{ products: Product[] }>({
     queryKey: ['store', 'products'],
-    queryFn: () => apiClient.get('/api/store/manage/products'),
+    queryFn: () => storeApi.get('/api/store/manage/products'),
   });
   const products = productsData?.products ?? [];
 
   const createCategory = useMutation({
-    mutationFn: (name: string) => apiClient.post('/api/store/manage/categories', { name }),
+    mutationFn: (name: string) => storeApi.post('/api/store/manage/categories', { name }),
     onSuccess: () => {
       setNewCategory('');
       queryClient.invalidateQueries({ queryKey: ['store', 'categories'] });
@@ -59,13 +63,13 @@ export default function ProdutosPage() {
   });
 
   const deleteCategory = useMutation({
-    mutationFn: (id: string) => apiClient.delete(`/api/store/manage/categories/${id}`),
+    mutationFn: (id: string) => storeApi.delete(`/api/store/manage/categories/${id}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['store', 'categories'] }),
     onError: (e: any) => alert(e?.message || 'Erro ao excluir categoria'),
   });
 
   const deleteProduct = useMutation({
-    mutationFn: (id: string) => apiClient.delete(`/api/store/manage/products/${id}`),
+    mutationFn: (id: string) => storeApi.delete(`/api/store/manage/products/${id}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['store', 'products'] }),
     onError: (e: any) => alert(e?.message || 'Erro ao excluir produto'),
   });
@@ -75,6 +79,7 @@ export default function ProdutosPage() {
 
   return (
     <div className="space-y-8">
+      {readOnly && <ManagedStoreBanner />}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Produtos</h1>
@@ -83,7 +88,9 @@ export default function ProdutosPage() {
           </p>
         </div>
         <Button
+          disabled={readOnly}
           onClick={() => {
+            if (readOnly) return;
             setEditingProduct(null);
             setProductDialogOpen(true);
           }}
@@ -104,14 +111,16 @@ export default function ProdutosPage() {
             <Input
               placeholder="Nova categoria (ex.: Lanches, Bebidas)"
               value={newCategory}
+              disabled={readOnly}
               onChange={(e) => setNewCategory(e.target.value)}
               onKeyDown={(e) => {
+                if (readOnly) return;
                 if (e.key === 'Enter' && newCategory.trim()) createCategory.mutate(newCategory.trim());
               }}
             />
             <Button
               variant="secondary"
-              disabled={!newCategory.trim() || createCategory.isPending}
+              disabled={readOnly || !newCategory.trim() || createCategory.isPending}
               onClick={() => createCategory.mutate(newCategory.trim())}
             >
               Adicionar
@@ -124,6 +133,7 @@ export default function ProdutosPage() {
             {categories.map((c) => (
               <Badge key={c.id} variant="outline" className="flex items-center gap-1 py-1">
                 {c.name}
+                {!readOnly && (
                 <button
                   className="ml-1 text-muted-foreground hover:text-red-600"
                   onClick={() => {
@@ -132,6 +142,7 @@ export default function ProdutosPage() {
                 >
                   <Trash2 className="h-3 w-3" />
                 </button>
+                )}
               </Badge>
             ))}
           </div>
@@ -165,6 +176,7 @@ export default function ProdutosPage() {
                 <div className="flex items-center gap-2">
                   {!p.active && <Badge variant="secondary">Inativo</Badge>}
                 </div>
+                {!readOnly && (
                 <div className="flex flex-wrap gap-2 pt-1">
                   <Button
                     size="sm"
@@ -190,6 +202,7 @@ export default function ProdutosPage() {
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
+                )}
               </CardContent>
             </Card>
           ))}
@@ -232,6 +245,7 @@ function ProductDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const storeApi = useStoreManageApi();
   const [name, setName] = useState(product?.name ?? '');
   const [description, setDescription] = useState(product?.description ?? '');
   const [basePrice, setBasePrice] = useState(String(product?.basePrice ?? ''));
@@ -253,8 +267,8 @@ function ProductDialog({
         active,
         photoUrl: photoUrl.trim() || undefined,
       };
-      if (product) return apiClient.put(`/api/store/manage/products/${product.id}`, payload);
-      return apiClient.post('/api/store/manage/products', payload);
+      if (product) return storeApi.put(`/api/store/manage/products/${product.id}`, payload);
+      return storeApi.post('/api/store/manage/products', payload);
     },
     onSuccess: onSaved,
     onError: (e: any) => setError(e?.message || 'Erro ao salvar produto'),
@@ -337,6 +351,7 @@ function ProductDialog({
 // ============================================
 function VariationsDialog({ product, onClose }: { product: Product; onClose: () => void }) {
   const queryClient = useQueryClient();
+  const storeApi = useStoreManageApi();
   const [groupName, setGroupName] = useState('');
   const [groupRequired, setGroupRequired] = useState(false);
   const [groupMin, setGroupMin] = useState('0');
@@ -344,7 +359,7 @@ function VariationsDialog({ product, onClose }: { product: Product; onClose: () 
 
   const { data, isLoading } = useQuery<{ product: Product }>({
     queryKey: ['store', 'product', product.id],
-    queryFn: () => apiClient.get(`/api/store/manage/products/${product.id}`),
+    queryFn: () => storeApi.get(`/api/store/manage/products/${product.id}`),
   });
   const groups = data?.product?.optionGroups ?? [];
 
@@ -352,7 +367,7 @@ function VariationsDialog({ product, onClose }: { product: Product; onClose: () 
 
   const addGroup = useMutation({
     mutationFn: () =>
-      apiClient.post(`/api/store/manage/products/${product.id}/option-groups`, {
+      storeApi.post(`/api/store/manage/products/${product.id}/option-groups`, {
         name: groupName.trim(),
         minSelect: Number(groupMin) || 0,
         maxSelect: Number(groupMax) || 1,
@@ -369,7 +384,7 @@ function VariationsDialog({ product, onClose }: { product: Product; onClose: () 
   });
 
   const deleteGroup = useMutation({
-    mutationFn: (id: string) => apiClient.delete(`/api/store/manage/option-groups/${id}`),
+    mutationFn: (id: string) => storeApi.delete(`/api/store/manage/option-groups/${id}`),
     onSuccess: invalidate,
   });
 
@@ -445,12 +460,13 @@ function GroupBlock({
   onChanged: () => void;
   onDelete: () => void;
 }) {
+  const storeApi = useStoreManageApi();
   const [optName, setOptName] = useState('');
   const [optPrice, setOptPrice] = useState('');
 
   const addOption = useMutation({
     mutationFn: () =>
-      apiClient.post(`/api/store/manage/option-groups/${group.id}/options`, {
+      storeApi.post(`/api/store/manage/option-groups/${group.id}/options`, {
         name: optName.trim(),
         priceDelta: Number(String(optPrice).replace(',', '.')) || 0,
       }),
@@ -463,7 +479,7 @@ function GroupBlock({
   });
 
   const deleteOption = useMutation({
-    mutationFn: (id: string) => apiClient.delete(`/api/store/manage/options/${id}`),
+    mutationFn: (id: string) => storeApi.delete(`/api/store/manage/options/${id}`),
     onSuccess: onChanged,
   });
 
