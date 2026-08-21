@@ -41,7 +41,7 @@ export function PartnerDeliveryPayoutPanel({ partner }: { partner: Partner }) {
   return (
     <Card className="border-primary/20">
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
           <div>
             <CardTitle className="text-lg flex items-center gap-2">
               <Banknote className="h-5 w-5 text-primary" />

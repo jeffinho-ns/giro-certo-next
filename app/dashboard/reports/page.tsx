@@ -345,7 +345,7 @@ export default function ReportsPage() {
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                           <div className="text-right">
                             <p className="text-sm font-medium">
                               Score: {ranking.reliabilityScore.toFixed(1)}

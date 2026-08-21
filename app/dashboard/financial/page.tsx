@@ -217,7 +217,7 @@ export default function FinancialPage() {
                 Cobranças de pedidos pagos e taxa da plataforma
               </CardDescription>
             </CardHeader>
-            <CardContent className="h-[320px]">
+            <CardContent className="h-[260px] min-w-0 sm:h-[320px]">
               {isLoading ? (
                 <ChartSkeleton />
               ) : (data?.monthlySeries.length ?? 0) === 0 ? (
@@ -278,7 +278,7 @@ export default function FinancialPage() {
                 Corridas, carteira motoboy e mensalidades de lojas
               </CardDescription>
             </CardHeader>
-            <CardContent className="h-[320px]">
+            <CardContent className="h-[260px] min-w-0 sm:h-[320px]">
               {isLoading ? (
                 <ChartSkeleton />
               ) : (

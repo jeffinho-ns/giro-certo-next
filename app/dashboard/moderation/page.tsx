@@ -230,14 +230,14 @@ export default function ModerationPage() {
                       {new Date(post.createdAt).toLocaleDateString('pt-BR')}
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button variant="ghost" size="sm" onClick={() => setSelectedPost(post)}>
                               <Eye className="h-4 w-4" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
+                          <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-2xl">
                             <DialogHeader>
                               <DialogTitle>Detalhes do Post</DialogTitle>
                               <DialogDescription>Informações completas do post</DialogDescription>
@@ -275,7 +275,7 @@ export default function ModerationPage() {
                                     <p className="text-xs text-red-600">{selectedPost.reportReason}</p>
                                   </div>
                                 )}
-                                <div className="flex gap-2">
+                                <div className="flex flex-col gap-2 sm:flex-row">
                                   <Button variant="outline" className="flex-1" disabled>Aprovar</Button>
                                   <Button
                                     variant="destructive"

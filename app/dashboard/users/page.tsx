@@ -400,22 +400,22 @@ export default function UsersPage() {
               <table className="w-full">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground sm:px-6">
                       Usuário
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground sm:px-6">
                       Email
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground sm:px-6">
                       Role Atual
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground sm:px-6">
                       Tipo de Usuário
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground sm:px-6">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground sm:px-6">
                       Ações
                     </th>
                   </tr>
@@ -423,7 +423,7 @@ export default function UsersPage() {
                 <tbody className="divide-y divide-border">
                   {filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
+                      <td colSpan={6} className="px-3 py-8 text-center text-muted-foreground sm:px-6">
                         Nenhum usuário encontrado
                       </td>
                     </tr>
@@ -437,7 +437,7 @@ export default function UsersPage() {
 
                       return (
                         <tr key={user.id} className="hover:bg-muted/50">
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="whitespace-nowrap px-3 py-4 sm:px-6">
                             <div className="flex items-center">
                               <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                                 <span className="text-sm font-medium text-primary">
@@ -457,10 +457,10 @@ export default function UsersPage() {
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="whitespace-nowrap px-3 py-4 sm:px-6">
                             <div className="text-sm text-foreground">{user.email}</div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="whitespace-nowrap px-3 py-4 sm:px-6">
                             <span
                               className={`px-2 py-1 text-xs font-semibold rounded-full ${getRoleBadgeColor(
                                 user.role
@@ -469,7 +469,7 @@ export default function UsersPage() {
                               {user.role}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="whitespace-nowrap px-3 py-4 sm:px-6">
                             <span
                               className={`px-2 py-1 text-xs font-semibold rounded-full ${getUserTypeBadgeColor(
                                 resolvedUserType
@@ -478,7 +478,7 @@ export default function UsersPage() {
                               {getUserTypeLabel(resolvedUserType)}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="whitespace-nowrap px-3 py-4 sm:px-6">
                             <span
                               className={`px-2 py-1 text-xs font-semibold rounded-full ${
                                 user.isOnline
@@ -489,7 +489,7 @@ export default function UsersPage() {
                               {user.isOnline ? 'Online' : 'Offline'}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <td className="whitespace-nowrap px-3 py-4 text-sm sm:px-6">
                             <div className="flex items-center gap-2 flex-wrap">
                               {currentUser?.id !== user.id && (
                                 <>

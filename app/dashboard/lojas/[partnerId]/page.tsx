@@ -298,8 +298,8 @@ export default function AdminStoreOverviewPage({
             <ul className="space-y-3">
               {(auditData?.entries ?? []).map((entry) => (
                 <li key={entry.id} className="rounded-lg border border-border p-3 text-sm">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium">{entry.action}</span>
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+                    <span className="break-all font-medium">{entry.action}</span>
                     <span className="shrink-0 text-xs text-muted-foreground">
                       {new Date(entry.createdAt).toLocaleString('pt-BR')}
                     </span>

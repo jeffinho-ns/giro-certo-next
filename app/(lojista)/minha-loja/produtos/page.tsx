@@ -107,8 +107,9 @@ export default function ProdutosPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <Input
+              className="min-w-0 flex-1"
               placeholder="Nova categoria (ex.: Lanches, Bebidas)"
               value={newCategory}
               disabled={readOnly}
@@ -517,15 +518,15 @@ function GroupBlock({
         ))}
       </div>
 
-      <div className="mt-2 flex gap-2">
+      <div className="mt-2 flex flex-col gap-2 sm:flex-row">
         <Input
-          className="h-8"
+          className="h-8 min-w-0 flex-1"
           placeholder="Opção (ex.: Grande)"
           value={optName}
           onChange={(e) => setOptName(e.target.value)}
         />
         <Input
-          className="h-8 w-28"
+          className="h-8 w-full sm:w-28"
           placeholder="+R$"
           value={optPrice}
           onChange={(e) => setOptPrice(e.target.value)}

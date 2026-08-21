@@ -210,7 +210,7 @@ export default function GamificationPage() {
                   <TableCell className="font-medium">{tier.reward}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{tier.description}</TableCell>
                   <TableCell>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button variant="ghost" size="sm">
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -270,7 +270,7 @@ export default function GamificationPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button variant="ghost" size="sm">
                         <Edit className="h-4 w-4" />
                       </Button>

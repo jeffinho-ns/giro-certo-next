@@ -350,19 +350,19 @@ export default function ConfiguracoesPage() {
                 {day.closed ? (
                   <span className="text-sm text-muted-foreground">Fechado</span>
                 ) : (
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Input
                       type="time"
                       value={day.open}
                       onChange={(e) => updateDay(key, { open: e.target.value })}
-                      className="w-[8rem]"
+                      className="w-full min-w-0 sm:w-[8rem]"
                     />
                     <span className="text-sm text-muted-foreground">até</span>
                     <Input
                       type="time"
                       value={day.close}
                       onChange={(e) => updateDay(key, { close: e.target.value })}
-                      className="w-[8rem]"
+                      className="w-full min-w-0 sm:w-[8rem]"
                     />
                   </div>
                 )}

@@ -262,19 +262,19 @@ export default function DocumentsPage() {
             {documents.map((document) => (
               <Card key={document.id}>
                 <CardContent className="pt-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-2 flex flex-wrap items-center gap-3">
                         <FileText className="h-5 w-5 text-muted-foreground" />
                         <h3 className="font-semibold">{getTypeLabel(document.documentType)}</h3>
                         {getStatusBadge(document.status)}
                       </div>
                       
                       {document.user && (
-                        <div className="flex items-center gap-2 mb-2 text-sm text-muted-foreground">
-                          <User className="h-4 w-4" />
+                        <div className="mb-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                          <User className="h-4 w-4 shrink-0" />
                           <span>{document.user.name}</span>
-                          <span className="text-muted-foreground/70">({document.user.email})</span>
+                          <span className="break-all text-muted-foreground/70">({document.user.email})</span>
                         </div>
                       )}
 
@@ -318,7 +318,7 @@ export default function DocumentsPage() {
                       <Button
                         variant="outline"
                         onClick={() => handleReview(document)}
-                        className="ml-4"
+                        className="w-full shrink-0 sm:ml-4 sm:w-auto"
                       >
                         <ShieldCheck className="h-4 w-4 mr-2" />
                         Revisar
@@ -333,7 +333,7 @@ export default function DocumentsPage() {
 
         {/* Modal de Revisão */}
         <Dialog open={isReviewModalOpen} onOpenChange={setIsReviewModalOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>Revisar Documento</DialogTitle>
               <DialogDescription>
@@ -386,7 +386,7 @@ export default function DocumentsPage() {
                   />
                 </div>
 
-                <div className="flex justify-end gap-2">
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                   <Button
                     variant="outline"
                     onClick={() => {

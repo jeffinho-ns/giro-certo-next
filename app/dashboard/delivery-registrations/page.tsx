@@ -394,9 +394,9 @@ export default function DeliveryRegistrationPage() {
               {registrations.map((registration) => (
                 <div
                   key={registration.id}
-                  className="border rounded-lg p-4 flex items-start justify-between hover:bg-muted/50 transition"
+                  className="flex flex-col gap-3 rounded-lg border p-4 transition hover:bg-muted/50 sm:flex-row sm:items-start sm:justify-between"
                 >
-                  <div className="flex-1 space-y-2">
+                  <div className="min-w-0 flex-1 space-y-2">
                     <div className="flex items-center gap-3">
                       <div>
                         <p className="font-semibold">{registration.user?.name || 'Usuário'}</p>
@@ -439,7 +439,7 @@ export default function DeliveryRegistrationPage() {
 
       {/* Modal de Detalhes e Aprovação */}
       <Dialog open={isReviewModalOpen} onOpenChange={setIsReviewModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-[calc(100%-2rem)] overflow-y-auto sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>Revisar Registro de Delivery</DialogTitle>
             <DialogDescription>

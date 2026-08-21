@@ -399,7 +399,7 @@ export default function DisputesPage() {
                         {new Date(dispute.createdAt).toLocaleDateString('pt-BR')}
                       </CardDescription>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {getTypeBadge(dispute.disputeType)}
                       {getStatusBadge(dispute.status)}
                     </div>
@@ -424,7 +424,7 @@ export default function DisputesPage() {
         {/* Modal de Detalhes */}
         {selectedDispute && disputeDetail && (
           <Dialog open={!!selectedDispute} onOpenChange={(open) => !open && setSelectedDispute(null)}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-h-[90vh] max-w-[calc(100%-2rem)] overflow-y-auto sm:max-w-4xl">
               <DialogHeader>
                 <DialogTitle>Detalhes da Disputa</DialogTitle>
                 <DialogDescription>
@@ -435,7 +435,7 @@ export default function DisputesPage() {
 
               <div className="space-y-6">
                 {/* Status e Tipo */}
-                <div className="flex gap-4">
+                <div className="flex flex-wrap gap-2">
                   {getTypeBadge(disputeDetail.dispute.disputeType)}
                   {getStatusBadge(disputeDetail.dispute.status)}
                 </div>
@@ -547,8 +547,8 @@ export default function DisputesPage() {
                 )}
               </div>
 
-              <DialogFooter className="flex justify-between">
-                <div className="flex gap-2">
+              <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-between">
+                <div className="flex flex-wrap gap-2">
                   {isAdmin && disputeDetail.dispute.status === DisputeStatus.OPEN && (
                     <Button
                       variant="outline"
@@ -568,7 +568,7 @@ export default function DisputesPage() {
                     </Button>
                   )}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {isAdmin && disputeDetail.dispute.status !== DisputeStatus.CLOSED && (
                     <Dialog open={isResolveModalOpen} onOpenChange={setIsResolveModalOpen}>
                       <DialogTrigger asChild>

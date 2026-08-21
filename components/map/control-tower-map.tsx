@@ -351,7 +351,7 @@ export function ControlTowerMap({
               }}
             >
               <Popup>
-                <div className="space-y-2 min-w-[220px]">
+                <div className="space-y-2 w-[min(220px,70vw)] min-w-0">
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-semibold">{rider.name}</p>
                     {rider.hasVerifiedBadge && (
@@ -430,7 +430,7 @@ export function ControlTowerMap({
               }}
             >
               <Popup>
-                <div className="space-y-2 min-w-[180px]">
+                <div className="space-y-2 w-[min(180px,70vw)] min-w-0">
                   <p className="font-semibold text-sm">
                     {order.storeName || "Loja"}{" "}
                     <span className="text-muted-foreground font-normal">
@@ -468,7 +468,7 @@ export function ControlTowerMap({
               icon={deliveryIcon || undefined}
             >
               <Popup>
-                <div className="space-y-1 min-w-[160px]">
+                <div className="space-y-1 w-[min(160px,70vw)] min-w-0">
                   <p className="font-semibold text-sm">Cliente / entrega</p>
                   <p className="text-xs text-muted-foreground">
                     {order.deliveryAddress || "Endereço de entrega"}

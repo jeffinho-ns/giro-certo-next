@@ -272,7 +272,7 @@ export function StorefrontClient({
       {/* Barra de carrinho */}
       {itemCount > 0 && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white p-3 shadow-lg dark:bg-gray-900">
-          <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-2">
             <div className="text-sm">
               <span className="font-semibold">{itemCount}</span> item(s) •{' '}
               <span className="font-semibold">{money(subtotal)}</span>
@@ -289,7 +289,9 @@ export function StorefrontClient({
               disabled={!store.isOpen}
               style={store.isOpen ? { backgroundColor: theme } : undefined}
             >
-              <ShoppingBag className="mr-2 h-4 w-4" /> Ver carrinho
+              <ShoppingBag className="mr-2 h-4 w-4" />
+              <span className="sm:hidden">Carrinho</span>
+              <span className="hidden sm:inline">Ver carrinho</span>
             </Button>
           </div>
         </div>
@@ -776,14 +778,14 @@ function CheckoutDialog({
                   </button>
                 </div>
               ) : (
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <Input
                     value={couponInput}
                     onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                     placeholder="Cupom de desconto"
-                    className="h-9 font-mono"
+                    className="h-9 min-w-0 flex-1 font-mono"
                   />
-                  <Button variant="outline" className="h-9" onClick={applyCoupon} disabled={couponLoading}>
+                  <Button variant="outline" className="h-9 shrink-0" onClick={applyCoupon} disabled={couponLoading}>
                     {couponLoading ? '...' : 'Aplicar'}
                   </Button>
                 </div>
@@ -922,8 +924,8 @@ function CheckoutDialog({
               <div className="space-y-1">
                 <Label>PIX copia e cola</Label>
                 <div className="flex gap-2">
-                  <Input readOnly value={payment.pix.payload} className="text-xs" />
-                  <Button size="icon" variant="outline" onClick={copyPix}>
+                  <Input readOnly value={payment.pix.payload} className="min-w-0 flex-1 text-xs" />
+                  <Button size="icon" variant="outline" className="shrink-0" onClick={copyPix}>
                     {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
@@ -967,7 +969,7 @@ function CheckoutDialog({
             </Button>
           )}
           {step === 'form' && (
-            <div className="flex w-full gap-2">
+            <div className="flex w-full flex-col-reverse gap-2 sm:flex-row">
               <Button variant="outline" onClick={() => setStep('cart')}>
                 Voltar
               </Button>

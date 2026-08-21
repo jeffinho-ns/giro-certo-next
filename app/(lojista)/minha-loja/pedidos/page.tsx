@@ -146,8 +146,14 @@ export default function PedidosPage() {
               <span className="text-muted-foreground">(0)</span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="andamento">Em andamento ({counts.andamento})</TabsTrigger>
-          <TabsTrigger value="aguardando">Aguardando pgto ({counts.aguardando})</TabsTrigger>
+          <TabsTrigger value="andamento">
+            <span className="sm:hidden">Andamento ({counts.andamento})</span>
+            <span className="hidden sm:inline">Em andamento ({counts.andamento})</span>
+          </TabsTrigger>
+          <TabsTrigger value="aguardando">
+            <span className="sm:hidden">Pgto ({counts.aguardando})</span>
+            <span className="hidden sm:inline">Aguardando pgto ({counts.aguardando})</span>
+          </TabsTrigger>
           <TabsTrigger value="historico">Histórico ({counts.historico})</TabsTrigger>
         </TabsList>
       </Tabs>
@@ -173,7 +179,7 @@ export default function PedidosPage() {
             >
               <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0 space-y-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold">#{o.id.slice(-8)}</span>
                     {statusBadge(o.status)}
                     {isPaid && (
@@ -182,7 +188,7 @@ export default function PedidosPage() {
                       </Badge>
                     )}
                   </div>
-                  <p className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <p className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
                     <Package className="h-3.5 w-3.5" /> {o.customerName}
                     <span className="mx-1">•</span>
                     <Phone className="h-3.5 w-3.5" /> {o.customerPhone}
@@ -196,9 +202,9 @@ export default function PedidosPage() {
                   </p>
                 </div>
 
-                <div className="flex flex-col items-end gap-2">
-                  <span className="text-lg font-bold">{money(o.total)}</span>
-                  <div className="flex gap-2">
+                <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end">
+                  <span className="text-lg font-bold sm:text-right">{money(o.total)}</span>
+                  <div className="flex flex-wrap gap-2">
                     <Button size="sm" variant="outline" onClick={() => setDetailId(o.id)}>
                       Detalhes
                     </Button>
@@ -322,7 +328,7 @@ function OrderDetailDialog({ id, onClose }: { id: string; onClose: () => void })
                   <KeyRound className="h-4 w-4" />
                   Código de retirada para o motoboy
                 </div>
-                <p className="font-mono text-3xl font-bold tracking-[0.35em] text-foreground">
+                <p className="overflow-x-auto font-mono text-2xl font-bold tracking-widest text-foreground sm:text-3xl sm:tracking-[0.35em]">
                   {order.pickupCode}
                 </p>
                 <p className="mt-2 text-xs text-muted-foreground">

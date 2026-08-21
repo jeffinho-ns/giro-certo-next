@@ -365,7 +365,7 @@ export default function PartnersPage() {
                     </div>
                   )}
 
-                  <div className="flex gap-2 pt-2">
+                  <div className="flex flex-wrap gap-2 pt-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -415,7 +415,7 @@ export default function PartnersPage() {
         {/* Modal de Detalhes */}
         {selectedPartner && partnerDetail && (
           <Dialog open={!!selectedPartner} onOpenChange={(open) => !open && setSelectedPartner(null)}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-h-[90vh] max-w-[calc(100%-2rem)] overflow-y-auto sm:max-w-4xl">
               <DialogHeader>
                 <DialogTitle>{partnerDetail.partner.name}</DialogTitle>
                 <DialogDescription>Detalhes completos do parceiro</DialogDescription>
@@ -424,7 +424,7 @@ export default function PartnersPage() {
               <PartnerDeliveryPayoutPanel partner={partnerDetail.partner} />
 
               <Tabs defaultValue="info" className="w-full mt-4">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid h-auto w-full grid-cols-1 sm:grid-cols-3">
                   <TabsTrigger value="info">Informações</TabsTrigger>
                   <TabsTrigger value="financial">Plano / mensalidade</TabsTrigger>
                   <TabsTrigger value="operational">Operacional</TabsTrigger>
@@ -583,7 +583,7 @@ function EditPartnerDialog({
   };
 
   return (
-    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+    <DialogContent className="max-h-[90vh] max-w-[calc(100%-2rem)] overflow-y-auto sm:max-w-2xl">
       <DialogHeader>
         <DialogTitle>{partner ? 'Editar Parceiro' : 'Novo Parceiro'}</DialogTitle>
         <DialogDescription>

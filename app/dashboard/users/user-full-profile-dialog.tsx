@@ -212,8 +212,8 @@ export function UserFullProfileDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[92vh] flex flex-col p-0 gap-0">
-        <DialogHeader className="px-6 pt-6 pb-2 shrink-0 border-b">
+      <DialogContent className="flex max-h-[92vh] max-w-[calc(100%-2rem)] flex-col gap-0 p-0 sm:max-w-4xl">
+        <DialogHeader className="shrink-0 border-b px-4 pb-2 pt-6 sm:px-6">
           <DialogTitle className="text-xl">Perfil completo</DialogTitle>
           <DialogDescription>
             Dados de cadastro, documentos, garagem e ações administrativas.
@@ -228,11 +228,11 @@ export function UserFullProfileDialog({
         )}
 
         {error && (
-          <p className="px-6 py-4 text-sm text-destructive">{error}</p>
+          <p className="px-4 py-4 text-sm text-destructive sm:px-6">{error}</p>
         )}
 
         {!loading && !error && (
-          <ScrollArea className="h-[min(70vh,720px)] px-6">
+          <ScrollArea className="h-[min(70vh,720px)] px-4 sm:px-6">
             <div className="space-y-6 py-4 pr-3">
               {/* Resumo + ações */}
               <section className="flex flex-col sm:flex-row gap-4 sm:items-start sm:justify-between">
@@ -363,8 +363,8 @@ export function UserFullProfileDialog({
                     </div>
                   </div>
                   {Array.isArray(wallet.transactions) && (wallet.transactions?.length ?? 0) > 0 && (
-                    <div className="border rounded-md overflow-hidden text-xs">
-                      <table className="w-full">
+                    <div className="overflow-x-auto rounded-md border text-xs">
+                      <table className="w-full min-w-[280px]">
                         <thead className="bg-muted/50">
                           <tr>
                             <th className="text-left p-2">Data</th>
@@ -573,7 +573,7 @@ export function UserFullProfileDialog({
           </ScrollArea>
         )}
 
-        <div className="px-6 py-3 border-t shrink-0 flex flex-wrap justify-between gap-2">
+        <div className="flex shrink-0 flex-wrap justify-between gap-2 border-t px-4 py-3 sm:px-6">
           {userId && onFollowRequest && currentUserId && currentUserId !== userId && (
             <Button
               type="button"
