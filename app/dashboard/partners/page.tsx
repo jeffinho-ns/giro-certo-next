@@ -213,9 +213,9 @@ export default function PartnersPage() {
   return (
     <ProtectedRoute requireModerator>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Gestão de Lojistas</h1>
+            <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Gestão de Lojistas</h1>
             <p className="text-muted-foreground mt-2">
               Gerencie parceiros, dados empresariais e informações financeiras
             </p>
@@ -299,7 +299,7 @@ export default function PartnersPage() {
             {filteredPartners.map((partner) => (
               <Card key={partner.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
-                  <div className="flex justify-between items-start">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <CardTitle className="text-lg">{partner.name}</CardTitle>
                       <CardDescription>
@@ -358,7 +358,7 @@ export default function PartnersPage() {
 
                   {partner.payment && (
                     <div className="pt-2 border-t">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <span className="text-sm text-muted-foreground">Plano:</span>
                         {getPaymentStatusBadge(partner.payment.status)}
                       </div>
@@ -591,7 +591,7 @@ function EditPartnerDialog({
         </DialogDescription>
       </DialogHeader>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Nome *</Label>
             <Input
@@ -626,7 +626,7 @@ function EditPartnerDialog({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Latitude *</Label>
             <Input
@@ -649,7 +649,7 @@ function EditPartnerDialog({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Telefone</Label>
             <Input
@@ -669,7 +669,7 @@ function EditPartnerDialog({
 
         {isCreateMode && (
           <>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Senha de acesso</Label>
                 <Input
@@ -711,7 +711,7 @@ function EditPartnerDialog({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Razão Social</Label>
             <Input
@@ -762,7 +762,7 @@ function EditPartnerDialog({
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Raio Máximo (km)</Label>
             <Input
@@ -852,7 +852,7 @@ function PartnerInfoTab({ partner }: { partner: Partner }) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <Label className="text-muted-foreground">Nome</Label>
           <p className="font-medium">{partner.name}</p>
@@ -871,7 +871,7 @@ function PartnerInfoTab({ partner }: { partner: Partner }) {
       </div>
 
       {partner.cnpj && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <Label className="text-muted-foreground">CNPJ</Label>
             <p className="font-medium">{partner.cnpj}</p>
@@ -890,7 +890,7 @@ function PartnerInfoTab({ partner }: { partner: Partner }) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {partner.email && (
           <div>
             <Label className="text-muted-foreground">Email</Label>
@@ -937,7 +937,7 @@ function PartnerFinancialTab({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <Label className="text-muted-foreground">Tipo de Plano</Label>
           <p className="font-medium">

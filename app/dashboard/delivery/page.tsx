@@ -40,7 +40,7 @@ function getStatusBadge(status: DeliveryStatus) {
 function DeliveryOrderDetail({ order }: { order: DeliveryOrder }) {
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <p className="text-sm text-muted-foreground">Loja</p>
           <p className="font-medium">{order.storeName}</p>
@@ -54,7 +54,7 @@ function DeliveryOrderDetail({ order }: { order: DeliveryOrder }) {
           )}
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div>
           <p className="text-sm text-muted-foreground">Valor do Pedido</p>
           <p className="font-medium">R$ {order.value.toFixed(2)}</p>
@@ -106,7 +106,7 @@ export default function DeliveryPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Gestão de Delivery</h1>
+        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Gestão de Delivery</h1>
         <p className="text-muted-foreground mt-2">
           Monitoramento completo de pedidos de entrega
         </p>
@@ -118,8 +118,8 @@ export default function DeliveryPage() {
           <CardTitle>Filtros</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4">
-            <div className="flex-1">
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+            <div className="min-w-0 flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -131,7 +131,7 @@ export default function DeliveryPage() {
               </div>
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>

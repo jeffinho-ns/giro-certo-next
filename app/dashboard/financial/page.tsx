@@ -107,7 +107,7 @@ export default function FinancialPage() {
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Financeiro</h1>
+            <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Financeiro</h1>
             <p className="text-muted-foreground mt-2 max-w-2xl">
               Histórico de cobranças de entrega, comissões, assinaturas e repasses.
               Dados em tempo real da API — período selecionável abaixo.
@@ -115,7 +115,7 @@ export default function FinancialPage() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Select value={days} onValueChange={setDays}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

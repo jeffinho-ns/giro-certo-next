@@ -137,7 +137,7 @@ export default function SettlementsPage() {
     <ProtectedRoute requireAdmin>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Repasses (Asaas)</h1>
+          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Repasses (Asaas)</h1>
           <p className="text-muted-foreground mt-2">
             Livro de repasses, lotes e transferências para lojas e entregadores. Requer{' '}
             <code className="text-xs">ASAAS_ENABLE_PAYOUTS=true</code> para executar repasses reais.
@@ -320,7 +320,7 @@ export default function SettlementsPage() {
         </div>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle>Lotes de repasse</CardTitle>
               <CardDescription>
@@ -331,7 +331,7 @@ export default function SettlementsPage() {
               value={batchStatusFilter}
               onValueChange={setBatchStatusFilter}
             >
-              <SelectTrigger className="w-[220px]">
+              <SelectTrigger className="w-full sm:w-[220px]">
                 <SelectValue placeholder="Filtrar status" />
               </SelectTrigger>
               <SelectContent>

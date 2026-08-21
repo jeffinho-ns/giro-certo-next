@@ -395,7 +395,7 @@ function ProductOptionsDialog({
         <div className="space-y-4">
           {product.optionGroups.map((g) => (
             <div key={g.id} className="space-y-2">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-1">
                 <Label className="font-semibold">{g.name}</Label>
                 <span className="text-xs text-muted-foreground">
                   {g.required ? 'Obrigatório' : 'Opcional'}
@@ -435,7 +435,7 @@ function ProductOptionsDialog({
 
           {error && <p className="text-sm text-red-600">{error}</p>}
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Button
                 size="icon"
@@ -766,7 +766,7 @@ function CheckoutDialog({
             {/* Cupom de desconto */}
             <div className="space-y-2 rounded-lg border border-dashed border-border p-3">
               {coupon ? (
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="text-sm">
                     <span className="font-mono font-semibold">{coupon.code}</span>{' '}
                     <span className="text-green-600">aplicado (-{money(coupon.discount)})</span>

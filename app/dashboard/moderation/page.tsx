@@ -76,7 +76,7 @@ export default function ModerationPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Moderação Social</h1>
+        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Moderação Social</h1>
         <p className="text-muted-foreground mt-2">
           Gestão dos posts da comunidade e fotos enviadas
         </p>
@@ -256,7 +256,7 @@ export default function ModerationPage() {
                                 </div>
                                 <p className="text-sm">{selectedPost.content}</p>
                                 {selectedPost.images?.length > 0 && (
-                                  <div className="grid grid-cols-2 gap-2">
+                                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                                     {selectedPost.images.map((img: string, idx: number) => (
                                       <div key={idx} className="relative h-32 w-full rounded-lg border bg-muted overflow-hidden">
                                         {/* eslint-disable-next-line @next/next/no-img-element */}

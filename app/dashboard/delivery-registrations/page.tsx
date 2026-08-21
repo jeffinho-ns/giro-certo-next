@@ -82,7 +82,7 @@ function RegistrationDetail({ registration }: { registration: DeliveryRegistrati
             <Badge variant="secondary" className="text-xs">Bicicleta</Badge>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
           <div>
             <p className="text-muted-foreground">Nome</p>
             <p className="font-medium">{registration.user?.name || 'N/A'}</p>
@@ -97,7 +97,7 @@ function RegistrationDetail({ registration }: { registration: DeliveryRegistrati
       {/* Documentos */}
       <div>
         <h3 className="font-semibold mb-2">Documentação</h3>
-        <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
           <div>
             <p className="text-muted-foreground">CPF/CNH</p>
             <p className="font-medium">{registration.cpfCnh}</p>
@@ -116,7 +116,7 @@ function RegistrationDetail({ registration }: { registration: DeliveryRegistrati
         <h3 className="font-semibold mb-2">
           {registration.vehicleType === 'BICYCLE' ? 'Dados da bike' : 'Dados da moto'}
         </h3>
-        <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
           <div>
             <p className="text-muted-foreground">
               {registration.vehicleType === 'BICYCLE' ? 'Nº de série' : 'Placa'}
@@ -179,7 +179,7 @@ function RegistrationDetail({ registration }: { registration: DeliveryRegistrati
       {/* Fotos */}
       <div>
         <h3 className="font-semibold mb-4">Fotos Enviadas</h3>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <ImagePreview data={registration.selfieWithDocData} label="Selfie com Documento" />
           <ImagePreview data={registration.cnhPhotoData} label="Foto da CNH" />
           <ImagePreview data={registration.crlvPhotoData} label="Foto do CRLV" />
@@ -342,7 +342,7 @@ export default function DeliveryRegistrationPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Aprovação de Registros</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">Aprovação de Registros</h1>
         <p className="text-muted-foreground">Gerencie pedidos de aprovação de entregadores</p>
       </div>
 
@@ -352,7 +352,7 @@ export default function DeliveryRegistrationPage() {
           <CardTitle className="text-lg">Filtros</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-end gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
             <div className="flex-1">
               <Label htmlFor="status-filter" className="mb-2 block">
                 Status
@@ -465,7 +465,7 @@ export default function DeliveryRegistrationPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     <Button
                       variant="destructive"
                       onClick={() => {

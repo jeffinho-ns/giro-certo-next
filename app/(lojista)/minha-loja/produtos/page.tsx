@@ -80,7 +80,7 @@ export default function ProdutosPage() {
   return (
     <div className="space-y-8">
       {readOnly && <ManagedStoreBanner />}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Produtos</h1>
           <p className="text-sm text-muted-foreground">
@@ -295,7 +295,7 @@ function ProductDialog({
               placeholder="Ingredientes, detalhes..."
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Preço base (R$)</Label>
               <Input
@@ -406,7 +406,7 @@ function VariationsDialog({ product, onClose }: { product: Product; onClose: () 
             value={groupName}
             onChange={(e) => setGroupName(e.target.value)}
           />
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div className="space-y-1">
               <Label className="text-xs">Mínimo</Label>
               <Input value={groupMin} onChange={(e) => setGroupMin(e.target.value)} inputMode="numeric" />

@@ -18,6 +18,7 @@ import {
   Copy,
   Check,
   Shield,
+  Menu,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiClient } from '@/lib/api';
@@ -32,6 +33,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 
 const NAV_SEGMENTS = [
   { name: 'Pedidos', segment: 'pedidos', icon: ClipboardList },
@@ -50,6 +53,116 @@ function getInitials(name: string) {
     .join('')
     .toUpperCase()
     .slice(0, 2);
+}
+
+function LojistaSidebar({
+  displayName,
+  isAdminMode,
+  backHref,
+  navigation,
+  pathname,
+  storefrontPath,
+  copied,
+  onCopyStorefront,
+  onNavigate,
+  className,
+}: {
+  displayName: string;
+  isAdminMode: boolean;
+  backHref?: string;
+  navigation: { name: string; href: string; icon: React.ComponentType<{ className?: string }> }[];
+  pathname: string;
+  storefrontPath: string | null;
+  copied: boolean;
+  onCopyStorefront: () => void;
+  onNavigate?: () => void;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        'flex h-full w-64 flex-col border-r border-border bg-card',
+        className
+      )}
+    >
+      <div className="flex h-16 items-center gap-3 border-b border-border px-4 sm:px-6">
+        {backHref && (
+          <Link
+            href={backHref}
+            onClick={onNavigate}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+            title="Voltar"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+        )}
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <Store className="h-5 w-5" />
+        </div>
+        <div className="min-w-0">
+          <h1 className="truncate text-lg font-bold text-foreground">{displayName}</h1>
+          <p className="text-xs text-muted-foreground">
+            {isAdminMode ? 'Gestão admin da vitrine' : 'Portal do Lojista'}
+          </p>
+        </div>
+      </div>
+
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+        {navigation.map((item) => {
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              onClick={onNavigate}
+              className={cn(
+                'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              )}
+            >
+              <item.icon className="h-5 w-5 flex-shrink-0" />
+              <span className="flex-1">{item.name}</span>
+            </Link>
+          );
+        })}
+      </nav>
+
+      {storefrontPath && (
+        <div className="space-y-1 border-t border-border px-3 py-3">
+          <p className="px-3 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            Vitrine pública
+          </p>
+          <p className="truncate px-3 font-mono text-xs text-foreground">{storefrontPath}</p>
+          <div className="flex gap-1">
+            <a
+              href={storefrontPath}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={onNavigate}
+              className="flex flex-1 items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <ExternalLink className="h-4 w-4" />
+              <span>Abrir</span>
+            </a>
+            <button
+              type="button"
+              onClick={onCopyStorefront}
+              className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              {copied ? (
+                <Check className="h-4 w-4 text-green-600" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+              <span>{copied ? 'Copiado' : 'Copiar'}</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export interface LojistaLayoutProps {
@@ -73,6 +186,7 @@ export function LojistaLayout({
   const router = useRouter();
   const { user, logout } = useAuth();
   const { partnerName, isAdminMode, readOnly } = useStoreManage();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const navigation = NAV_SEGMENTS.map((item) => ({
     ...item,
@@ -110,105 +224,73 @@ export function LojistaLayout({
     router.push('/login');
   };
 
+  const sidebarProps = {
+    displayName,
+    isAdminMode,
+    backHref,
+    navigation,
+    pathname,
+    storefrontPath,
+    copied,
+    onCopyStorefront: copyStorefront,
+  };
+
   const content = (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <div className="flex h-full w-64 flex-col border-r border-border bg-card">
-        <div className="flex h-16 items-center gap-3 border-b border-border px-6">
-          {backHref && (
-            <Link
-              href={backHref}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
-              title="Voltar"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          )}
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Store className="h-5 w-5" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="truncate text-lg font-bold text-foreground">{displayName}</h1>
-            <p className="text-xs text-muted-foreground">
-              {isAdminMode ? 'Gestão admin da vitrine' : 'Portal do Lojista'}
-            </p>
-          </div>
-        </div>
+    <div className="flex h-dvh overflow-hidden bg-background">
+      <aside className="hidden md:flex md:shrink-0">
+        <LojistaSidebar {...sidebarProps} />
+      </aside>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-          {navigation.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                )}
-              >
-                <item.icon className="h-5 w-5 flex-shrink-0" />
-                <span className="flex-1">{item.name}</span>
-              </Link>
-            );
-          })}
-        </nav>
+      <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+        <SheetContent
+          side="left"
+          showCloseButton={false}
+          className="w-[min(100%,18rem)] border-r p-0 sm:max-w-none"
+        >
+          <SheetTitle className="sr-only">Menu da loja</SheetTitle>
+          <LojistaSidebar
+            {...sidebarProps}
+            className="w-full border-r-0"
+            onNavigate={() => setMobileNavOpen(false)}
+          />
+        </SheetContent>
+      </Sheet>
 
-        {storefrontPath && (
-          <div className="space-y-1 border-t border-border px-3 py-3">
-            <p className="px-3 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Vitrine pública
-            </p>
-            <p className="truncate px-3 font-mono text-xs text-foreground">{storefrontPath}</p>
-            <div className="flex gap-1">
-              <a
-                href={storefrontPath}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-1 items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <ExternalLink className="h-4 w-4" />
-                <span>Abrir</span>
-              </a>
-              <button
-                type="button"
-                onClick={copyStorefront}
-                className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                {copied ? (
-                  <Check className="h-4 w-4 text-green-600" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-                <span>{copied ? 'Copiado' : 'Copiar'}</span>
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {isAdminMode && (
-          <div className="flex items-center gap-2 border-b border-amber-200 bg-amber-50 px-6 py-2 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100">
-            <Shield className="h-4 w-4 shrink-0" />
-            <span>
+          <div className="flex items-start gap-2 border-b border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 sm:items-center sm:px-6 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100">
+            <Shield className="mt-0.5 h-4 w-4 shrink-0 sm:mt-0" />
+            <span className="min-w-0 flex-1">
               Gerenciando vitrine de <strong>{displayName}</strong> como admin
               {readOnly ? ' (somente leitura)' : ''}
             </span>
             {actAsPartnerId && (
-              <span className="ml-auto font-mono text-xs opacity-70">{actAsPartnerId.slice(0, 8)}…</span>
+              <span className="hidden font-mono text-xs opacity-70 sm:inline">
+                {actAsPartnerId.slice(0, 8)}…
+              </span>
             )}
           </div>
         )}
 
-        <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
-          <h2 className="text-lg font-semibold text-foreground">
-            {isAdminMode ? 'Gerenciar vitrine' : 'Minha Loja'}
-          </h2>
+        <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border bg-card px-3 sm:h-16 sm:px-4 md:px-6">
+          <div className="flex min-w-0 items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="shrink-0 md:hidden"
+              onClick={() => setMobileNavOpen(true)}
+              aria-label="Abrir menu"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <h2 className="truncate text-base font-semibold text-foreground sm:text-lg">
+              {isAdminMode ? 'Gerenciar vitrine' : 'Minha Loja'}
+            </h2>
+          </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 rounded-full">
+              <button className="flex items-center gap-2 rounded-full" type="button">
                 <Avatar>
                   <AvatarFallback>{user ? getInitials(user.name) : '👤'}</AvatarFallback>
                 </Avatar>
@@ -231,7 +313,9 @@ export function LojistaLayout({
           </DropdownMenu>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 md:p-6">
+          {children}
+        </main>
       </div>
     </div>
   );

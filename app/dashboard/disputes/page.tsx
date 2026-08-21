@@ -247,7 +247,7 @@ export default function DisputesPage() {
     <ProtectedRoute requireModerator>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Central de Disputas</h1>
+          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Central de Disputas</h1>
           <p className="text-muted-foreground mt-2">
             Gerencie e resolva conflitos e reclamações do sistema
           </p>
@@ -391,7 +391,7 @@ export default function DisputesPage() {
                 onClick={() => setSelectedDispute(dispute)}
               >
                 <CardHeader>
-                  <div className="flex justify-between items-start">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <CardTitle className="text-lg">Disputa #{dispute.id.slice(0, 8)}</CardTitle>
                       <CardDescription>

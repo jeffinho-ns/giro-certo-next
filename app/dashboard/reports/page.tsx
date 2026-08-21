@@ -105,7 +105,7 @@ export default function ReportsPage() {
     <ProtectedRoute requireModerator>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Relatórios</h1>
+          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Relatórios</h1>
           <p className="text-muted-foreground mt-2">
             Relatórios exportáveis do sistema
           </p>
@@ -114,7 +114,7 @@ export default function ReportsPage() {
         {/* Relatório 1: Lojistas Inadimplentes */}
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-start">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <AlertCircle className="h-5 w-5 text-orange-500" />
@@ -124,7 +124,7 @@ export default function ReportsPage() {
                   Lista de parceiros com pagamentos atrasados
                 </CardDescription>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -157,7 +157,7 @@ export default function ReportsPage() {
                     {overduePartners.partners.slice(0, 10).map((partner: any) => (
                       <div
                         key={partner.id}
-                        className="flex justify-between items-center p-2 border rounded"
+                        className="flex flex-col gap-2 rounded border p-2 sm:flex-row sm:items-center sm:justify-between"
                       >
                         <div>
                           <p className="font-medium">{partner.name}</p>
@@ -183,7 +183,7 @@ export default function ReportsPage() {
         {/* Relatório 2: Comissões Pendentes */}
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-start">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <DollarSign className="h-5 w-5 text-yellow-500" />
@@ -193,7 +193,7 @@ export default function ReportsPage() {
                   Comissões aguardando processamento
                 </CardDescription>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -216,7 +216,7 @@ export default function ReportsPage() {
           <CardContent>
             <div className="space-y-4">
               {/* Filtros */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Data Inicial</Label>
                   <Input
@@ -239,7 +239,7 @@ export default function ReportsPage() {
                 <div className="text-center py-4">Carregando...</div>
               ) : (
                 <div className="space-y-2">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                       <p className="text-sm text-muted-foreground">Total Pendente</p>
                       <p className="text-2xl font-bold">
@@ -256,7 +256,7 @@ export default function ReportsPage() {
                       {pendingCommissions.transactions.slice(0, 10).map((transaction: any) => (
                         <div
                           key={transaction.id}
-                          className="flex justify-between items-center p-2 border rounded"
+                          className="flex flex-col gap-2 rounded border p-2 sm:flex-row sm:items-center sm:justify-between"
                         >
                           <div>
                             <p className="font-medium">
@@ -292,7 +292,7 @@ export default function ReportsPage() {
         {/* Relatório 3: Ranking de Confiabilidade */}
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-start">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-green-500" />
@@ -302,7 +302,7 @@ export default function ReportsPage() {
                   Top entregadores por confiabilidade e desempenho
                 </CardDescription>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -332,7 +332,7 @@ export default function ReportsPage() {
                     {reliabilityRanking.rankings.map((ranking: any, index: number) => (
                       <div
                         key={ranking.rider.id}
-                        className="flex justify-between items-center p-3 border rounded hover:bg-accent"
+                        className="flex flex-col gap-2 rounded border p-3 hover:bg-accent sm:flex-row sm:items-center sm:justify-between"
                       >
                         <div className="flex items-center gap-3">
                           <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold">

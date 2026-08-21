@@ -79,7 +79,7 @@ export default function SubscribersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Assinantes Premium</h1>
+        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Assinantes Premium</h1>
         <p className="text-muted-foreground mt-2">
           Gestão e estatísticas de membros Premium
         </p>
@@ -146,8 +146,8 @@ export default function SubscribersPage() {
           <CardTitle>Filtros e Busca</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4">
-            <div className="flex-1 relative">
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+            <div className="relative min-w-0 flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar por nome ou email..."
@@ -157,7 +157,7 @@ export default function SubscribersPage() {
               />
             </div>
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder="Ordenar por" />
               </SelectTrigger>
               <SelectContent>

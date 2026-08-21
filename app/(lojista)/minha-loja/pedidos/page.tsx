@@ -135,7 +135,7 @@ export default function PedidosPage() {
       </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
-        <TabsList>
+        <TabsList className="h-auto w-full justify-start">
           <TabsTrigger value="novos" className="gap-1.5">
             Novos
             {counts.novos > 0 ? (

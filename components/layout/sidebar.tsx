@@ -2,22 +2,21 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  Package, 
-  DollarSign, 
-  Crown, 
-  Trophy, 
+import {
+  LayoutDashboard,
+  Package,
+  DollarSign,
+  Crown,
+  Trophy,
   Users,
   MapPin,
-  Home,
   UserCog,
   Store,
   AlertTriangle,
   FileText,
   Bell,
   ShieldCheck,
-  Wallet
+  Wallet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -68,7 +67,7 @@ const navigation = [
     icon: ShieldCheck,
     description: 'FASE 1: Documento Casual',
   },
-    {
+  {
     name: 'Aprovação',
     href: '/dashboard/delivery-registrations',
     icon: ShieldCheck,
@@ -107,11 +106,22 @@ const navigation = [
   },
 ];
 
-export function Sidebar() {
+export function Sidebar({
+  className,
+  onNavigate,
+}: {
+  className?: string;
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
 
   return (
-    <div className="flex h-full w-64 flex-col border-r border-border bg-card">
+    <div
+      className={cn(
+        'flex h-full w-64 flex-col border-r border-border bg-card',
+        className
+      )}
+    >
       <div className="flex h-16 items-center gap-3 border-b border-border px-6">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <span className="text-xl font-bold">🏍️</span>
@@ -121,16 +131,20 @@ export function Sidebar() {
           <p className="text-xs text-muted-foreground">Admin</p>
         </div>
       </div>
-      
-      <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
+
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
         {navigation.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive =
+            item.href === '/dashboard'
+              ? pathname === '/dashboard'
+              : pathname === item.href || pathname.startsWith(item.href + '/');
           return (
             <Link
               key={item.name}
               href={item.href}
+              onClick={onNavigate}
               className={cn(
-                'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors relative',
+                'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                 isActive
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -140,10 +154,14 @@ export function Sidebar() {
               <item.icon className="h-5 w-5 flex-shrink-0" />
               <span className="flex-1">{item.name}</span>
               {item.description && (
-                <span className={cn(
-                  'absolute left-full ml-2 px-2 py-1 text-xs rounded-md bg-popover border border-border shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50',
-                  isActive ? 'text-primary-foreground bg-primary/90' : 'text-foreground'
-                )}>
+                <span
+                  className={cn(
+                    'pointer-events-none absolute left-full z-50 ml-2 whitespace-nowrap rounded-md border border-border bg-popover px-2 py-1 text-xs opacity-0 shadow-md transition-opacity group-hover:opacity-100',
+                    isActive
+                      ? 'bg-primary/90 text-primary-foreground'
+                      : 'text-foreground'
+                  )}
+                >
                   {item.description}
                 </span>
               )}

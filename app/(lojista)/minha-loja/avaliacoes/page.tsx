@@ -71,7 +71,7 @@ export default function AvaliacoesPage() {
         {reviews.map((r) => (
           <Card key={r.id}>
             <CardContent className="space-y-1 py-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <Stars value={r.rating} />
                 <span className="text-xs text-muted-foreground">
                   {new Date(r.createdAt).toLocaleDateString('pt-BR')}

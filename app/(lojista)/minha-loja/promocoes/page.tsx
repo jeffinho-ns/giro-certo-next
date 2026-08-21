@@ -54,7 +54,7 @@ export default function PromocoesPage() {
   return (
     <div className="space-y-6">
       {readOnly && <ManagedStoreBanner />}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Promoções</h1>
           <p className="text-sm text-muted-foreground">
@@ -216,7 +216,7 @@ function BannerDialog({
             <Label>Título (opcional)</Label>
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex.: Combo do dia" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Desconto % (opcional)</Label>
               <Input value={discount} onChange={(e) => setDiscount(e.target.value)} placeholder="10" inputMode="numeric" />

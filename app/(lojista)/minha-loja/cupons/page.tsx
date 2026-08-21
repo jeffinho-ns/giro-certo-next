@@ -66,7 +66,7 @@ export default function CuponsPage() {
   return (
     <div className="space-y-6">
       {readOnly && <ManagedStoreBanner />}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Cupons</h1>
           <p className="text-sm text-muted-foreground">
@@ -225,7 +225,7 @@ function CouponDialog({
               className="font-mono"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Tipo</Label>
               <Select value={discountType} onValueChange={(v) => setDiscountType(v as CouponDiscountType)}>
@@ -248,7 +248,7 @@ function CouponDialog({
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Subtotal mínimo (R$)</Label>
               <Input

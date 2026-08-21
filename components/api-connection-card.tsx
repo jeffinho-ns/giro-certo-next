@@ -14,14 +14,14 @@ export function ApiConnectionCard() {
       </h3>
       
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <span className="text-sm text-muted-foreground">URL da API:</span>
           <code className="px-2 py-1 rounded bg-muted text-foreground text-sm">
             {apiUrl}
           </code>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <span className="text-sm text-muted-foreground">Status:</span>
           <div className="flex items-center gap-2">
             <div className={`h-2 w-2 rounded-full ${

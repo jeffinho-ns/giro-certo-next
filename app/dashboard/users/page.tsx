@@ -326,19 +326,19 @@ export default function UsersPage() {
     <ProtectedRoute requireAdmin>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Gerenciamento de Usuários</h1>
+          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Gerenciamento de Usuários</h1>
           <p className="text-muted-foreground mt-2">
             Gerencie permissões, tipo de usuário e níveis de acesso dos usuários do sistema
           </p>
         </div>
 
         {/* Filtros */}
-        <div className="flex gap-4 items-center flex-wrap">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <Input
             placeholder="Buscar por nome ou email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-sm"
+            className="w-full max-w-sm"
           />
           <Select
             value={filterRole}
@@ -352,7 +352,7 @@ export default function UsersPage() {
               }
             }}
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Filtrar por role" />
             </SelectTrigger>
             <SelectContent>
@@ -374,7 +374,7 @@ export default function UsersPage() {
               }
             }}
           >
-            <SelectTrigger className="w-[220px]">
+            <SelectTrigger className="w-full sm:w-[220px]">
               <SelectValue placeholder="Filtrar por tipo" />
             </SelectTrigger>
             <SelectContent>
@@ -534,7 +534,7 @@ export default function UsersPage() {
                                 }}
                                 disabled={!isAdmin || isRowLoading}
                               >
-                                <SelectTrigger className="w-[170px]">
+                                <SelectTrigger className="w-full sm:w-[170px]">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -560,7 +560,7 @@ export default function UsersPage() {
                                   }}
                                   disabled={!isAdmin || isRowLoading}
                                 >
-                                  <SelectTrigger className="w-[190px]">
+                                  <SelectTrigger className="w-full sm:w-[190px]">
                                     <SelectValue placeholder="Tipo motociclista" />
                                   </SelectTrigger>
                                   <SelectContent>

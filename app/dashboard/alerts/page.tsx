@@ -137,13 +137,13 @@ export default function AlertsPage() {
   return (
     <ProtectedRoute requireModerator>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Alertas e Notificações</h1>
+            <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Alertas e Notificações</h1>
             <p className="text-muted-foreground mt-2">
               Gerencie alertas automáticos do sistema
-          </p>
-        </div>
+            </p>
+          </div>
           {stats && stats.unread > 0 ? (
             <Button
               variant="outline"
@@ -279,7 +279,7 @@ export default function AlertsPage() {
                 }`}
               >
                 <CardHeader>
-                  <div className="flex justify-between items-start">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex items-start gap-3 flex-1">
                       <div className="mt-1">{getTypeIcon(alert.type)}</div>
                       <div className="flex-1">

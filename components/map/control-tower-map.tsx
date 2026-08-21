@@ -309,7 +309,7 @@ export function ControlTowerMap({
   }, [riders, orders]);
 
   return (
-    <div className="h-[600px] w-full rounded-lg border border-border overflow-hidden relative">
+    <div className="relative h-[min(55vh,420px)] w-full overflow-hidden rounded-lg border border-border md:h-[600px]">
       <MapContainer center={center} zoom={13} style={{ height: "100%", width: "100%" }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -352,7 +352,7 @@ export function ControlTowerMap({
             >
               <Popup>
                 <div className="space-y-2 min-w-[220px]">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <p className="font-semibold">{rider.name}</p>
                     {rider.hasVerifiedBadge && (
                       <ShieldCheck className="h-4 w-4 text-green-600" />

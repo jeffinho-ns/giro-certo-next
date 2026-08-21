@@ -190,9 +190,9 @@ export default function DocumentsPage() {
   return (
     <ProtectedRoute requireAdmin>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Documentos de Entregadores</h1>
+            <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Documentos de Entregadores</h1>
             <p className="text-muted-foreground mt-2">
               FASE 1: Revisar e aprovar documentos dos motociclistas
             </p>
