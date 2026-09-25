@@ -62,6 +62,10 @@ interface AdminBike {
     partName: string;
     category: string;
     status: string;
+    wearPercentage?: number;
+    lastChangeKm?: number;
+    currentKm?: number;
+    recommendedChangeKm?: number;
     createdAt: string;
   }>;
 }
@@ -143,6 +147,7 @@ export function UserFullProfileDialog({
   const [bikes, setBikes] = useState<AdminBike[]>([]);
   const [deliveryRegs, setDeliveryRegs] = useState<DeliveryRegistrationRow[]>([]);
   const [blocking, setBlocking] = useState(false);
+  const [overrideLoading, setOverrideLoading] = useState(false);
 
   const userId = user?.id;
 
@@ -183,6 +188,22 @@ export function UserFullProfileDialog({
 
   const wallet = detail?.wallet;
   const blocked = detail?.deliveryRiderBlocked === true;
+  const maintenanceOverride = detail?.maintenanceBlockOverride === true;
+
+  const latestMaintenanceByPart = (logs: AdminBike['maintenanceLogs']) => {
+    const map = new Map<string, AdminBike['maintenanceLogs'][number]>();
+    for (const log of logs) {
+      if (!map.has(log.partName)) map.set(log.partName, log);
+    }
+    return Array.from(map.values());
+  };
+
+  const bikeHasActiveCritical = (bike: AdminBike) =>
+    latestMaintenanceByPart(bike.maintenanceLogs || []).some(
+      (m) =>
+        m.status === 'CRITICO' ||
+        (typeof m.wearPercentage === 'number' && m.wearPercentage >= 0.9)
+    );
 
   const handleToggleRiderBlock = async () => {
     if (!userId || !isAdmin) return;
@@ -205,6 +226,32 @@ export function UserFullProfileDialog({
       alert(e instanceof Error ? e.message : 'Não foi possível atualizar o bloqueio.');
     } finally {
       setBlocking(false);
+    }
+  };
+
+  const handleToggleMaintenanceOverride = async () => {
+    if (!userId || !isAdmin) return;
+    const next = !maintenanceOverride;
+    if (
+      !window.confirm(
+        next
+          ? 'Liberar temporariamente este entregador para aceitar corridas mesmo com manutenção crítica? (override de suporte)'
+          : 'Remover o override? O bloqueio por manutenção crítica volta a aplicar-se se ainda houver peça crítica.'
+      )
+    ) {
+      return;
+    }
+    setOverrideLoading(true);
+    try {
+      await apiClient.put(`/api/users/${userId}/maintenance-block-override`, {
+        override: next,
+      });
+      await load();
+      onRiderBlockToggled?.();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Não foi possível atualizar o override de manutenção.');
+    } finally {
+      setOverrideLoading(false);
     }
   };
 
@@ -264,6 +311,12 @@ export function UserFullProfileDialog({
                         <Badge className="bg-emerald-600/90">Docs verificados</Badge>
                       )}
                       {blocked && <Badge variant="destructive">Corridas bloqueadas</Badge>}
+                      {bikes.some(bikeHasActiveCritical) && !maintenanceOverride && (
+                        <Badge variant="destructive">Manutenção crítica ativa</Badge>
+                      )}
+                      {maintenanceOverride && (
+                        <Badge className="bg-amber-600/90">Override manutenção</Badge>
+                      )}
                       {detail?.verificationBadge && <Badge>Verificado</Badge>}
                     </div>
                   </div>
@@ -282,8 +335,26 @@ export function UserFullProfileDialog({
                       {blocking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
                       {blocked ? 'Desbloquear corridas' : 'Bloquear corridas (inadimplência)'}
                     </Button>
-                    <p className="text-xs text-muted-foreground max-w-[240px] text-left sm:text-right">
-                      O utilizador deixa de aparecer no matching e não pode aceitar corridas.
+                    <Button
+                      type="button"
+                      variant={maintenanceOverride ? 'secondary' : 'outline'}
+                      size="sm"
+                      className="gap-2"
+                      onClick={handleToggleMaintenanceOverride}
+                      disabled={overrideLoading}
+                    >
+                      {overrideLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Wrench className="h-4 w-4" />
+                      )}
+                      {maintenanceOverride
+                        ? 'Remover liberação (manutenção)'
+                        : 'Liberar apesar da manutenção'}
+                    </Button>
+                    <p className="text-xs text-muted-foreground max-w-[260px] text-left sm:text-right">
+                      Ideal: o piloto regista a manutenção na Garagem e libera sozinho. O
+                      override é só para suporte emergencial.
                     </p>
                   </div>
                 )}
@@ -465,12 +536,65 @@ export function UserFullProfileDialog({
                           ) : null}
                         </div>
                         {b.maintenanceLogs && b.maintenanceLogs.length > 0 && (
-                          <div>
-                            <p className="text-xs font-medium mb-1">Manutenção (últimos registos)</p>
+                          <div className="space-y-2">
+                            <p className="text-xs font-medium">Estado atual por peça</p>
+                            <div className="overflow-x-auto rounded-md border text-xs">
+                              <table className="w-full min-w-[320px]">
+                                <thead className="bg-muted/50">
+                                  <tr>
+                                    <th className="text-left p-2">Peça</th>
+                                    <th className="text-left p-2">Status</th>
+                                    <th className="text-right p-2">Desgaste</th>
+                                    <th className="text-left p-2">Atualizado</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {latestMaintenanceByPart(b.maintenanceLogs).map((m) => {
+                                    const critical =
+                                      m.status === 'CRITICO' ||
+                                      (typeof m.wearPercentage === 'number' &&
+                                        m.wearPercentage >= 0.9);
+                                    return (
+                                      <tr key={m.id} className="border-t">
+                                        <td className="p-2">{m.partName}</td>
+                                        <td className="p-2">
+                                          <Badge
+                                            variant={critical ? 'destructive' : 'outline'}
+                                            className="text-[10px]"
+                                          >
+                                            {m.status}
+                                          </Badge>
+                                        </td>
+                                        <td className="p-2 text-right">
+                                          {typeof m.wearPercentage === 'number'
+                                            ? `${Math.round(m.wearPercentage * 100)}%`
+                                            : '—'}
+                                        </td>
+                                        <td className="p-2 text-muted-foreground">
+                                          {m.createdAt
+                                            ? new Date(m.createdAt).toLocaleString('pt-BR')
+                                            : '—'}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                            <p className="text-xs font-medium pt-1">Histórico (últimos 12)</p>
                             <ul className="text-xs space-y-1 list-disc pl-4">
-                              {b.maintenanceLogs.slice(0, 6).map((m) => (
-                                <li key={m.id}>
-                                  {m.partName} — {m.status} ({m.category})
+                              {b.maintenanceLogs.slice(0, 12).map((m) => (
+                                <li key={`${m.id}-hist`}>
+                                  {m.createdAt
+                                    ? new Date(m.createdAt).toLocaleString('pt-BR')
+                                    : '—'}{' '}
+                                  — {m.partName}: {m.status}
+                                  {typeof m.wearPercentage === 'number'
+                                    ? ` (${Math.round(m.wearPercentage * 100)}%)`
+                                    : ''}
+                                  {typeof m.lastChangeKm === 'number'
+                                    ? ` · última troca ${m.lastChangeKm} km`
+                                    : ''}
                                 </li>
                               ))}
                             </ul>
