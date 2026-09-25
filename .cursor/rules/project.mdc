@@ -1,0 +1,18 @@
+---
+description: Projeto Giro Certo / Loja Virtual — Web (Next.js) — contexto e regras específicas
+alwaysApply: true
+---
+
+# Giro Certo — Web (Next.js)
+
+> Documentos mestre: **`PLANO_LOJA_VIRTUAL.md`** e **`AGENTS.md`** na raiz. Detalhes deste repo também em `loja-virtual.mdc`. Regras gerais já vêm das rules `common-*`, `typescript-*`, `react-*` e `web-*` — **não as repita aqui**.
+
+## Stack (real)
+- Next.js (App Router) + React — **TypeScript estrito**, Tailwind, TanStack Query, `apiClient` em `lib/api.ts`.
+- Sem acesso direto a banco: tudo via API `giro-certo-api`.
+
+## Específico deste repo
+- `/dashboard` (admin) permanece intocado; áreas novas em `app/(public)/` e `app/(lojista)/`.
+- Segurança real mora na API (o gate client-side é só UX).
+- Nunca expor dados sensíveis em telas/endpoints públicos.
+- Responder sempre em português.
