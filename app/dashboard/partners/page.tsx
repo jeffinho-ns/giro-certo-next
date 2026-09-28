@@ -548,6 +548,7 @@ function EditPartnerDialog({
     password: '',
     confirmPassword: '',
     storeManagementMode: (partner?.storeManagementMode ?? 'self') as StoreManagementMode,
+    ifoodMerchantId: partner?.ifoodMerchantId || '',
   });
   const [passwordError, setPasswordError] = useState('');
 
@@ -738,6 +739,20 @@ function EditPartnerDialog({
 
         {formData.type === PartnerType.STORE && (
           <div className="space-y-2">
+            <Label>ID da loja no iFood</Label>
+            <Input
+              value={formData.ifoodMerchantId}
+              onChange={(e) => setFormData({ ...formData, ifoodMerchantId: e.target.value })}
+              placeholder="Store/chain ID (UUID)"
+            />
+            <p className="text-xs text-muted-foreground">
+              Só pedidos com entrega própria desta loja viram corrida. Deixe vazio se a loja não usa iFood.
+            </p>
+          </div>
+        )}
+
+        {formData.type === PartnerType.STORE && (
+          <div className="space-y-2">
             <Label>Gestão da vitrine</Label>
             <Select
               value={formData.storeManagementMode}
@@ -887,6 +902,13 @@ function PartnerInfoTab({ partner }: { partner: Partner }) {
         <div>
           <Label className="text-muted-foreground">Nome Fantasia</Label>
           <p className="font-medium">{partner.tradingName}</p>
+        </div>
+      )}
+
+      {partner.ifoodMerchantId && (
+        <div>
+          <Label className="text-muted-foreground">iFood</Label>
+          <p className="font-medium break-all">{partner.ifoodMerchantId}</p>
         </div>
       )}
 

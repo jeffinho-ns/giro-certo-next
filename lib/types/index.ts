@@ -273,6 +273,8 @@ export interface Partner {
   store_delivery_fee_mode?: string | null;
   store_delivery_fee_max?: number | null;
   store_delivery_fee_fixed?: number | null;
+  /** Store/chain ID do iFood. Vazio = sem integração. */
+  ifoodMerchantId?: string | null;
 }
 
 export interface PartnerPayment {
