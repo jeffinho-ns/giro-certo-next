@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/lib/contexts/auth-context';
 import { Partner, PartnerPayment, PartnerType, PaymentPlanType, PaymentStatus } from '@/lib/types';
 import { apiClient } from '@/lib/api';
@@ -45,6 +45,7 @@ export default function PartnersPage() {
   const [filterBlocked, setFilterBlocked] = useState<string>('all');
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const editingPartnerRef = useRef(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   // Listar parceiros
@@ -86,8 +87,12 @@ export default function PartnersPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['partners'] });
+      queryClient.invalidateQueries({ queryKey: ['partner'] });
       setIsEditModalOpen(false);
       setSelectedPartner(null);
+    },
+    onError: (error: Error) => {
+      alert(error.message || 'Não foi possível salvar o parceiro.');
     },
   });
 
@@ -221,14 +226,26 @@ export default function PartnersPage() {
             </p>
           </div>
           {isAdmin && (
-            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+            <Dialog
+              open={isEditModalOpen}
+              onOpenChange={(open) => {
+                setIsEditModalOpen(open);
+                if (!open) editingPartnerRef.current = false;
+              }}
+            >
               <DialogTrigger asChild>
-                <Button onClick={() => setSelectedPartner(null)}>
+                <Button
+                  onClick={() => {
+                    editingPartnerRef.current = false;
+                    setSelectedPartner(null);
+                  }}
+                >
                   <Building2 className="h-4 w-4 mr-2" />
                   Novo Parceiro
                 </Button>
               </DialogTrigger>
               <EditPartnerDialog
+                key={selectedPartner?.id ?? 'new'}
                 partner={selectedPartner}
                 onSave={(data) => createPartnerMutation.mutate(data)}
                 isLoading={createPartnerMutation.isPending}
@@ -414,7 +431,12 @@ export default function PartnersPage() {
 
         {/* Modal de Detalhes */}
         {selectedPartner && partnerDetail && (
-          <Dialog open={!!selectedPartner} onOpenChange={(open) => !open && setSelectedPartner(null)}>
+          <Dialog
+            open={!!selectedPartner && !isEditModalOpen}
+            onOpenChange={(open) => {
+              if (!open && !editingPartnerRef.current) setSelectedPartner(null);
+            }}
+          >
             <DialogContent className="max-h-[90vh] max-w-[calc(100%-2rem)] overflow-y-auto sm:max-w-4xl">
               <DialogHeader>
                 <DialogTitle>{partnerDetail.partner.name}</DialogTitle>
@@ -467,6 +489,7 @@ export default function PartnersPage() {
                     <Button
                       variant="outline"
                       onClick={() => {
+                        editingPartnerRef.current = true;
                         setSelectedPartner(partnerDetail.partner);
                         setIsEditModalOpen(true);
                       }}
@@ -521,17 +544,8 @@ export default function PartnersPage() {
 }
 
 // Componentes auxiliares
-function EditPartnerDialog({
-  partner,
-  onSave,
-  isLoading,
-}: {
-  partner: Partner | null;
-  onSave: (data: any) => void;
-  isLoading: boolean;
-}) {
-  const isCreateMode = !partner;
-  const [formData, setFormData] = useState({
+function partnerToForm(partner: Partner | null) {
+  return {
     name: partner?.name || '',
     type: partner?.type || PartnerType.STORE,
     address: partner?.address || '',
@@ -549,8 +563,26 @@ function EditPartnerDialog({
     confirmPassword: '',
     storeManagementMode: (partner?.storeManagementMode ?? 'self') as StoreManagementMode,
     ifoodMerchantId: partner?.ifoodMerchantId || '',
-  });
+  };
+}
+
+function EditPartnerDialog({
+  partner,
+  onSave,
+  isLoading,
+}: {
+  partner: Partner | null;
+  onSave: (data: any) => void;
+  isLoading: boolean;
+}) {
+  const isCreateMode = !partner;
+  const [formData, setFormData] = useState(() => partnerToForm(partner));
   const [passwordError, setPasswordError] = useState('');
+
+  useEffect(() => {
+    setFormData(partnerToForm(partner));
+    setPasswordError('');
+  }, [partner?.id]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -568,10 +600,20 @@ function EditPartnerDialog({
       }
     }
 
+    const latitude = parseFloat(formData.latitude);
+    const longitude = parseFloat(formData.longitude);
+    if (!formData.name.trim() || !formData.address.trim() || Number.isNaN(latitude) || Number.isNaN(longitude)) {
+      alert('Preencha nome, endereço, latitude e longitude antes de salvar.');
+      return;
+    }
+
     onSave({
       ...formData,
-      latitude: parseFloat(formData.latitude),
-      longitude: parseFloat(formData.longitude),
+      name: formData.name.trim(),
+      address: formData.address.trim(),
+      latitude,
+      longitude,
+      ifoodMerchantId: formData.ifoodMerchantId.trim(),
       maxServiceRadius: formData.maxServiceRadius ? parseFloat(formData.maxServiceRadius) : null,
       avgPreparationTime: formData.avgPreparationTime
         ? parseInt(formData.avgPreparationTime)
