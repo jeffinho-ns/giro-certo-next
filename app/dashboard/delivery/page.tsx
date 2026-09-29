@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { DeliveryOrder, DeliveryStatus } from '@/lib/types';
 import { Package, Search, Filter, Eye } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,7 @@ import { apiClient } from '@/lib/api';
 
 function getStatusBadge(status: DeliveryStatus) {
   const variants: Record<DeliveryStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+    awaiting_dispatch: 'outline',
     pending: 'secondary',
     accepted: 'default',
     arrivedAtStore: 'default',
@@ -25,6 +26,7 @@ function getStatusBadge(status: DeliveryStatus) {
   };
 
   const labels: Record<DeliveryStatus, string> = {
+    awaiting_dispatch: 'Aguardando despacho',
     pending: 'Pendente',
     accepted: 'Aceito',
     arrivedAtStore: 'Chegou na Loja',
@@ -74,6 +76,70 @@ function DeliveryOrderDetail({ order }: { order: DeliveryOrder }) {
           <p className="font-medium">{order.riderName}</p>
         </div>
       )}
+      {order.notes && (
+        <div>
+          <p className="text-sm text-muted-foreground">Observação</p>
+          <p className="font-medium">{order.notes}</p>
+        </div>
+      )}
+      {order.ifoodOrderId && <IfoodHomologationActions order={order} />}
+    </div>
+  );
+}
+
+function IfoodHomologationActions({ order }: { order: DeliveryOrder }) {
+  const ifoodOrderId = order.ifoodOrderId;
+  const queryClient = useQueryClient();
+  const canDispatch = order.status === DeliveryStatus.awaiting_dispatch;
+  const canCancel = order.status !== DeliveryStatus.cancelled && order.status !== DeliveryStatus.completed;
+  const action = useMutation({
+    mutationFn: async (kind: 'cancel' | 'dispatch') => {
+      return apiClient.post(`/api/ifood/orders/${ifoodOrderId}/${kind}`);
+    },
+    onSuccess: (_data, kind) => {
+      queryClient.invalidateQueries({ queryKey: ['delivery-orders'] });
+      alert(
+        kind === 'cancel'
+          ? 'Pedido cancelado no iFood. Nenhum motoboy foi chamado.'
+          : 'Pedido despachado no iFood. Nenhum motoboy foi chamado.'
+      );
+    },
+    onError: (error: Error) => {
+      alert(error.message || 'Não foi possível falar com o iFood.');
+    },
+  });
+
+  if (!ifoodOrderId) return null;
+
+  return (
+    <div className="space-y-3 rounded-lg border p-3">
+      <div>
+        <p className="text-sm font-medium">Homologação iFood</p>
+        <p className="text-xs text-muted-foreground">
+          Use estes botões nos passos de cancelar e despachar. Eles respondem ao iFood e não chamam motoboy.
+        </p>
+      </div>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button
+          variant="outline"
+          disabled={!canCancel || action.isPending}
+          onClick={() => {
+            if (confirm('Cancelar este pedido no iFood?')) action.mutate('cancel');
+          }}
+        >
+          Cancelar no iFood
+        </Button>
+        <Button
+          disabled={!canDispatch || action.isPending}
+          onClick={() => {
+            if (confirm('Avisar o iFood que a entrega própria saiu? Nenhum motoboy será chamado.')) {
+              action.mutate('dispatch');
+            }
+          }}
+        >
+          Despachar no iFood
+        </Button>
+      </div>
     </div>
   );
 }
@@ -136,6 +202,7 @@ export default function DeliveryPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="awaiting_dispatch">Aguardando despacho</SelectItem>
                 <SelectItem value="pending">Pendente</SelectItem>
                 <SelectItem value="accepted">Aceito</SelectItem>
                 <SelectItem value="arrivedAtStore">Chegou na Loja</SelectItem>

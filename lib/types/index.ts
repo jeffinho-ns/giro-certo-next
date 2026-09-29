@@ -1,6 +1,7 @@
 // Tipos principais para o sistema Giro Certo
 
 export enum DeliveryStatus {
+  awaiting_dispatch = 'awaiting_dispatch',
   pending = 'pending',
   accepted = 'accepted',
   arrivedAtStore = 'arrivedAtStore',
@@ -89,6 +90,7 @@ export interface DeliveryOrder {
   recipientName?: string;
   recipientPhone?: string;
   notes?: string;
+  ifoodOrderId?: string | null;
   value: number;
   deliveryFee: number;
   appCommission: number;
