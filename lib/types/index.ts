@@ -1,5 +1,7 @@
 // Tipos principais para o sistema Giro Certo
 
+export type IfoodAcceptMode = 'after_ifood_accept' | 'immediate';
+
 export enum DeliveryStatus {
   awaiting_dispatch = 'awaiting_dispatch',
   pending = 'pending',
@@ -277,6 +279,8 @@ export interface Partner {
   store_delivery_fee_fixed?: number | null;
   /** Store/chain ID do iFood. Vazio = sem integração. */
   ifoodMerchantId?: string | null;
+  /** after_ifood_accept espera o gerente. immediate confirma e chama o motoboy na hora. */
+  ifoodAcceptMode?: 'after_ifood_accept' | 'immediate' | null;
 }
 
 export interface PartnerPayment {

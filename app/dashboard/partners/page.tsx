@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/lib/contexts/auth-context';
-import { Partner, PartnerPayment, PartnerType, PaymentPlanType, PaymentStatus } from '@/lib/types';
+import { Partner, PartnerPayment, PartnerType, PaymentPlanType, PaymentStatus, IfoodAcceptMode } from '@/lib/types';
 import { apiClient } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -563,6 +563,9 @@ function partnerToForm(partner: Partner | null) {
     confirmPassword: '',
     storeManagementMode: (partner?.storeManagementMode ?? 'self') as StoreManagementMode,
     ifoodMerchantId: partner?.ifoodMerchantId || '',
+    ifoodAcceptMode: (partner?.ifoodAcceptMode === 'immediate'
+      ? 'immediate'
+      : 'after_ifood_accept') as IfoodAcceptMode,
   };
 }
 
@@ -614,6 +617,8 @@ function EditPartnerDialog({
       latitude,
       longitude,
       ifoodMerchantId: formData.ifoodMerchantId.trim(),
+      ifoodAcceptMode:
+        formData.type === PartnerType.STORE ? formData.ifoodAcceptMode : undefined,
       maxServiceRadius: formData.maxServiceRadius ? parseFloat(formData.maxServiceRadius) : null,
       avgPreparationTime: formData.avgPreparationTime
         ? parseInt(formData.avgPreparationTime)
@@ -795,6 +800,36 @@ function EditPartnerDialog({
 
         {formData.type === PartnerType.STORE && (
           <div className="space-y-2">
+            <Label>Aceite do pedido iFood</Label>
+            <Select
+              value={formData.ifoodAcceptMode}
+              onValueChange={(value) =>
+                setFormData({
+                  ...formData,
+                  ifoodAcceptMode: value as IfoodAcceptMode,
+                })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="after_ifood_accept">
+                  Esperar o gerente aceitar no iFood
+                </SelectItem>
+                <SelectItem value="immediate">
+                  Aceitar na hora e chamar o motoboy
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Esperar: o motoboy só entra depois que o gerente aceita no iFood. Na hora: o Giro Certo confirma o pedido e chama o motoboy assim que o cliente pede.
+            </p>
+          </div>
+        )}
+
+        {formData.type === PartnerType.STORE && (
+          <div className="space-y-2">
             <Label>Gestão da vitrine</Label>
             <Select
               value={formData.storeManagementMode}
@@ -951,6 +986,11 @@ function PartnerInfoTab({ partner }: { partner: Partner }) {
         <div>
           <Label className="text-muted-foreground">iFood</Label>
           <p className="font-medium break-all">{partner.ifoodMerchantId}</p>
+          <p className="text-sm text-muted-foreground">
+            {partner.ifoodAcceptMode === 'immediate'
+              ? 'Aceita na hora e chama o motoboy'
+              : 'Espera o gerente aceitar no iFood'}
+          </p>
         </div>
       )}
 
